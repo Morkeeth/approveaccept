@@ -179,6 +179,32 @@ class PublicBoundaryTests(unittest.TestCase):
         self.assertEqual(policy['payment_mode'], 'substitute')
         self.assertTrue(any('EUR 30.00' in line for line in policy['lines']))
 
+    def test_per_agent_keys_work_through_the_public_front_and_stay_bound(self):
+        status, made, _ = self.request('/api/agent-key', {'agent': 'Remote coder'}, token=self.owner)
+        self.assertEqual(status, 200)
+        key = made['key']
+        self.assertTrue(key.startswith('aa_agent_'))
+        # Its own name: accepted end to end through the front.
+        status, bought, _ = self.request('/api/purchase', self.purchase('Remote coder'), token=key)
+        self.assertEqual(status, 200)
+        self.assertEqual(bought['state'], 'captured')  # substitute adapter only
+        status, mine, _ = self.request('/api/agent/status?id=' + bought['id'], token=key)
+        self.assertEqual((status, mine['agent']), (200, 'Remote coder'))
+        self.assertEqual(self.request('/api/agent/policy?agent=Remote%20coder', token=key)[0], 200)
+        # Another name, another agent's request, owner routes: refused.
+        self.assertEqual(self.request('/api/purchase', self.purchase('Bound agent'), token=key)[0], 403)
+        self.assertEqual(self.request('/api/agent/policy?agent=Bound%20agent', token=key)[0], 403)
+        _, other, _ = self.request('/api/purchase', self.purchase('Bound agent'), token=self.agent)
+        self.assertEqual(self.request('/api/agent/status?id=' + other['id'], token=key)[0], 403)
+        for path in ('/api/allowance', '/api/agent-key', '/api/decide', '/api/approval-link'):
+            self.assertEqual(self.request(path, {'agent': 'Remote coder'}, token=key)[0], 401, path)
+        self.assertEqual(self.request('/api/state', token=key)[1]['access'], 'public_demo')
+        # An agent cannot mint keys, and a revoked or forged key stops working.
+        self.assertEqual(self.request('/api/agent-key', {'agent': 'Remote coder'}, token=self.agent)[0], 401)
+        self.assertEqual(self.request('/api/agent-key-revoke', {'agent': 'Remote coder'}, token=self.owner)[0], 200)
+        self.assertEqual(self.request('/api/purchase', self.purchase('Remote coder'), token=key)[0], 401)
+        self.assertEqual(self.request('/api/purchase', self.purchase('Remote coder'), token='aa_agent_' + 'x' * 43)[0], 401)
+
     def test_phone_capability_still_requires_real_backend_validation(self):
         self.assertEqual(self.request('/api/phone-decision', {'token': 'unknown', 'action': 'approve'})[0], 403)
         self.assertEqual(self.request('/api/phone-decision', {'token': 'unknown', 'action': 'approve'}, origin=self.origin)[0], 409)

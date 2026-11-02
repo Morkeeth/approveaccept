@@ -1,0 +1,13 @@
+{
+  "mode": "PayPal Sandbox provider GET; no write",
+  "request_id": "BUY112141b371e7",
+  "local_state": "captured",
+  "order_id": "57D45488LP756511L",
+  "provider_order_status": "COMPLETED",
+  "authorization_id": "02S5326462575553B",
+  "provider_authorization_status": "CAPTURED",
+  "capture_id": "27677749TJ749103F",
+  "provider_capture_status": "COMPLETED",
+  "order_amount_matches_local": true,
+  "provider_order_description": "Domain name .com, 1 year - sent by Claude Code"
+}

@@ -1,0 +1,6 @@
+front health {'ok': True, 'service': 'approveaccept-web'}
+owner created key via front: 200
+owner set limits via front: 200
+agent key via front, own name: 200 captured BUY112141b371e7 27677749TJ749103F
+agent key via front, other name: 403 Use the agent identity assigned to this token
+agent key on owner route: 401

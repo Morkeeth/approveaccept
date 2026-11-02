@@ -34,20 +34,31 @@ CAPABILITY_WRITES = {'/api/phone-decision', '/api/passkey/enrol', '/api/suggesti
 WRITES = {'/api/decide', '/api/attacks', '/api/purchase', '/api/phone-decision',
           '/api/passkey/enrol', '/api/suggestion', '/api/subscription-cancel',
           '/api/allowance', '/api/allowance-revoke', '/api/approval-link',
-          '/api/demo/start', '/api/shopping/setup', '/api/ideas', '/api/ideas/choose'}
+          '/api/demo/start', '/api/shopping/setup', '/api/ideas', '/api/ideas/choose',
+          '/api/agent-key', '/api/agent-key-revoke'}
 
 
-def upstream_headers(owner=True):
+AGENT_KEY_PREFIX = 'aa_agent_'
+
+
+def is_agent_key(value):
+    # Owner-created per-agent keys. The front cannot check them (only their hash lives in the
+    # backend), so it forwards the caller's own key and the backend decides who it is.
+    return value.startswith(AGENT_KEY_PREFIX) and 40 <= len(value) <= 120 and value.isascii() \
+        and all(c.isalnum() or c in '_-' for c in value)
+
+
+def upstream_headers(owner=True, agent_key=''):
     # Forward the already-checked role, never upgrade an agent to owner.
-    token = OWNER_TOKEN if owner else AGENT_TOKEN
+    token = OWNER_TOKEN if owner else (agent_key or AGENT_TOKEN)
     headers = {'Content-Type': 'application/json', 'Origin': UPSTREAM_ROOT}
     if token:
         headers['Authorization'] = 'Bearer ' + token
     return headers
 
 
-def upstream_request(path, owner=True):
-    return urllib.request.Request(UPSTREAM_ROOT + path, headers=upstream_headers(owner))
+def upstream_request(path, owner=True, agent_key=''):
+    return urllib.request.Request(UPSTREAM_ROOT + path, headers=upstream_headers(owner, agent_key))
 
 
 def state():
@@ -109,7 +120,14 @@ class H(BaseHTTPRequestHandler):
             return 'owner'
         if len(AGENT_TOKEN) >= 32 and AGENT_NAME and value and secrets.compare_digest(value.encode(), AGENT_TOKEN.encode()):
             return 'agent'
+        if value and is_agent_key(value):
+            return 'agent_key'
         return None
+
+    def agent_key(self):
+        header = self.headers.get('Authorization', '')
+        value = header[7:] if header.startswith('Bearer ') else ''
+        return value if self.token_role() == 'agent_key' else ''
 
     def owner_session(self):
         try:
@@ -152,24 +170,26 @@ class H(BaseHTTPRequestHandler):
             value['access'] = 'owner'
             return self.reply_json(200, value)
         if self.path.startswith('/api/agent/policy?'):
-            if not (self.is_owner() or self.token_role() == 'agent'):
+            if not (self.is_owner() or self.token_role() in ('agent', 'agent_key')):
                 return self.reply_json(401, {'error': 'Agent sign-in required'})
             from urllib.parse import parse_qs, quote
             name = parse_qs(urlsplit(self.path).query).get('agent', [''])[0]
-            if not self.is_owner() and name != AGENT_NAME:
+            if not self.is_owner() and self.token_role() == 'agent' and name != AGENT_NAME:
                 return self.reply_json(403, {'error': 'Use the agent identity assigned to this token'})
             try:
-                with urllib.request.urlopen(upstream_request('/api/agent/policy?agent=' + quote(name), self.is_owner()), timeout=10) as response:
+                with urllib.request.urlopen(upstream_request('/api/agent/policy?agent=' + quote(name), self.is_owner(), self.agent_key()), timeout=10) as response:
                     return self.send(response.status, response.read(), 'application/json')
+            except urllib.error.HTTPError as exc:
+                return self.send(exc.code, exc.read(), 'application/json')
             except Exception:
                 return self.reply_json(502, {'error': 'PayPal sandbox backend unavailable'})
         if self.path.startswith('/api/agent/status?'):
-            if not (self.is_owner() or self.token_role() == 'agent'):
+            if not (self.is_owner() or self.token_role() in ('agent', 'agent_key')):
                 return self.reply_json(401, {'error': 'Agent sign-in required'})
             try:
-                with urllib.request.urlopen(upstream_request(self.path, self.is_owner()), timeout=10) as response:
+                with urllib.request.urlopen(upstream_request(self.path, self.is_owner(), self.agent_key()), timeout=10) as response:
                     value = json.load(response)
-                if not self.is_owner() and value.get('agent') != AGENT_NAME:
+                if not self.is_owner() and self.token_role() == 'agent' and value.get('agent') != AGENT_NAME:
                     return self.reply_json(403, {'error': 'This request belongs to another agent'})
                 return self.reply_json(200, value)
             except urllib.error.HTTPError as exc:
@@ -262,7 +282,7 @@ class H(BaseHTTPRequestHandler):
         role = self.token_role()
         owner = self.is_owner()
         if self.path not in CAPABILITY_WRITES:
-            if not owner and not (role == 'agent' and self.path == '/api/purchase'):
+            if not owner and not (role in ('agent', 'agent_key') and self.path == '/api/purchase'):
                 return self.reply_json(401, {'error': 'Owner or authorized agent sign-in required'})
             if role != 'owner' and owner and not self.same_origin():
                 return self.reply_json(403, {'error': 'Same-origin owner action required'})
@@ -278,7 +298,8 @@ class H(BaseHTTPRequestHandler):
                 return self.reply_json(400, {'error': 'JSON object required'})
             if role == 'agent' and not owner and value.get('agent') != AGENT_NAME:
                 return self.reply_json(403, {'error': 'Use the agent identity assigned to this token'})
-            req = urllib.request.Request(UPSTREAM_ROOT + self.path, body, upstream_headers(owner))
+            req = urllib.request.Request(UPSTREAM_ROOT + self.path, body,
+                                         upstream_headers(owner, self.agent_key() if not owner else ''))
             with urllib.request.urlopen(req, timeout=60) as r:
                 return self.send(r.status, r.read(), 'application/json')
         except json.JSONDecodeError:

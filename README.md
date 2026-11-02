@@ -36,7 +36,7 @@ Open `http://127.0.0.1:8780/journey` and sign in with the owner key from step 0.
 
 Payments are test payments from your own Sandbox account to your own Sandbox business account. No retailer order is placed.
 
-**Connect your agent.** Step 0 also creates an agent key, saved in the same file under the name `Judge agent`. Point any MCP client at `mcp_server.py` with that key and `AA_URL=http://127.0.0.1:8780`. Its requests go through the same spend rules; grant it an allowance from the owner dashboard at `/` to let it buy automatically.
+**Connect your agent.** On the Agents tab of `/inbox`, add an agent by name and copy its key (shown once). Run `mcp_server.py` with `APPROVEACCEPT_AGENT_TOKEN` set to that key and `AA_URL` set to this app: `http://127.0.0.1:8780` on the same machine, or the HTTPS address of the public front service (`./start-host.sh`) for an agent elsewhere. The agent's name comes from its key, so it cannot buy as another agent. Set its limits and categories on the same tab. Step 0 also saves one key under the name `Judge agent`.
 
 No PayPal account? `LEASH_V2_SUBSTITUTE=1 APPROVEACCEPT_OWNER_TOKEN=<any 32 or more characters> python3 -B app.py` serves the same `/journey` on port 8753 against labelled local fakes, with no PayPal call.
 
