@@ -4,41 +4,64 @@ ApproveAccept applies deterministic spend rules when any agent asks to buy somet
 
 The demo uses PayPal sandbox only. It never needs live credentials or real money.
 
-## The core flow: your agents buy, PayPal holds, you decide
+## The idea: your agents buy, PayPal holds, you decide
 
-Claude Code, GrokBot or any agent you name gets its own key. It sends a purchase (a domain, a hosting plan, a flight) over MCP or HTTP. ApproveAccept creates the PayPal Sandbox order at once, labelled with the agent's name, for example "Domain name .com, 1 year - sent by Claude Code", and holds the money. You set each agent's limits on the Agents tab: an amount paid automatically per item, a monthly allowance and allowed categories. Inside them, the hold is captured. Over them, it waits in your inbox for Face ID. A category you did not allow stops before PayPal.
+Claude Code, GrokBot or any agent you name gets its own key. It sends a purchase (a domain, a hosting plan, a flight) over MCP or HTTP. ApproveAccept creates the PayPal Sandbox order at once, labelled with the agent's name, for example "Domain name .com, 1 year - sent by Claude Code", and holds the money. You set each agent's limits: an amount paid automatically per item, a monthly allowance and allowed categories. Inside them, the hold is captured. Over them, it waits in your inbox for Face ID. A category you did not allow stops before PayPal.
 
-After step 0 below, open `http://127.0.0.1:8780/inbox`, then run `APPROVEACCEPT_OWNER_TOKEN=<owner key> AA_URL=http://127.0.0.1:8780 python3 connect/demo_agents.py` to watch two agents buy.
+## Try it: pick one path
 
-## Try it in 60 seconds: tap a mood, swipe, say yes
+You need Python 3.11 or newer and git. Both paths use the same address and pages:
 
-You need Python 3.11 or newer and a free PayPal Developer account.
+- `http://127.0.0.1:8780/inbox`: your agents' requests. **Start here.**
+- `http://127.0.0.1:8780/journey`: Surprise me, the fun shopping journey (also the third tab of the inbox).
 
-**Step 0. Bring your own PayPal Sandbox keys.** In [developer.paypal.com](https://developer.paypal.com) open Apps & Credentials, switch to **Sandbox**, and copy the client ID and secret of your default app. Then run:
+### Path A. No PayPal account (about 2 minutes)
 
-```sh
-python3 connect/byok.py
-```
+A labelled local stand-in replaces PayPal. Every payment ID starts with `SUB`, and no network payment is made.
 
-Paste the two keys when asked; the input is hidden. Press Enter at the merchant ID prompt to look it up. Then paste an Anthropic API key so a model ranks the ideas, or press Enter to skip. With a key, `pip install anthropic` first. The script checks the keys with PayPal Sandbox. It saves them in one file outside this repository, `~/.config/approveaccept/sandbox.env`, readable only by you. It shows your owner sign-in key once on the terminal. Nothing is committed, logged or sent anywhere except PayPal Sandbox. There is no live PayPal endpoint in this code.
+1. Clone and enter the repository:
+   ```sh
+   git clone https://github.com/Morkeeth/approveaccept.git && cd approveaccept
+   ```
+2. Start the app and leave it running. It prints your owner key:
+   ```sh
+   ./journey.sh --no-paypal
+   ```
+3. Open `http://127.0.0.1:8780/inbox` and sign in with the owner key from step 2.
+4. In a second terminal, in the same folder, let two agents buy:
+   ```sh
+   python3 connect/demo_agents.py
+   ```
+   On the Requests tab: Claude Code's domain (EUR 12) and hosting plan (EUR 20) are paid inside its EUR 30 limit. GrokBot's flight (EUR 89) is over its EUR 50 limit and waits for you.
+5. Decide on the flight: **Deny** releases the hold. **Raise GrokBot's limit for next time** changes the rule for its next requests only; the flight stays held until you approve or deny it. **Approve with Face ID** needs an HTTPS address (see "Face ID on your phone").
+6. Open the **Surprise me** tab, tap **Surprise me**, swipe and tap **Yes, this one**.
 
-**Step 1. Start the journey.**
+### Path B. PayPal Sandbox with your own keys (about 5 minutes)
 
-```sh
-./journey.sh
-```
+1. Clone and enter the repository, as in path A.
+2. Make a free account at [developer.paypal.com](https://developer.paypal.com). Open Apps & Credentials, switch to **Sandbox**, and copy the client ID and secret of the default app. Never use Live keys.
+3. Bring your own keys:
+   ```sh
+   python3 connect/byok.py
+   ```
+   Paste the two keys; the input is hidden. Press Enter at the merchant ID prompt to look it up. Optionally paste an Anthropic API key so Claude ranks the Surprise me ideas (run `pip install anthropic` first), or press Enter to skip. The keys are checked with PayPal Sandbox and saved in one file outside this repository, `~/.config/approveaccept/sandbox.env`, readable only by you. Your owner key is shown once on the terminal and also saved in that file.
+4. Start the app and leave it running:
+   ```sh
+   ./journey.sh
+   ```
+5. Open `http://127.0.0.1:8780/inbox` and sign in with the owner key from step 3.
+6. In a second terminal, in the same folder, run `python3 connect/demo_agents.py`. The two paid items are real PayPal Sandbox captures; each order description names the agent that sent it.
+7. Decide on the held flight as in path A, then try **Surprise me**. With a model key, Claude ranks the ideas; it writes no free text, so each reason is your own words plus the product's own title or tags, and an answer citing anything else is thrown away. Without a key, the screen says "No AI" and uses the local matcher.
 
-Open `http://127.0.0.1:8780/journey` and sign in with the owner key from step 0. Tap **Surprise me**, swipe the three ideas and tap **Yes, this one**.
+Payments are test payments between your own Sandbox accounts. No retailer order is placed, and there is no live PayPal endpoint in this code.
 
-- With a model key, Claude ranks the ideas. It writes no free text: each reason is your own words plus the product's own title or tags, and an answer that cites anything else is thrown away. Without a key, or if the model fails, the screen says "No AI" and uses the local matcher.
-- Inside your per-purchase limit (default EUR 50), it is bought at once in PayPal Sandbox and you get a receipt with the PayPal capture ID.
-- Over the limit, it becomes one Face ID decision. Nothing is charged until you approve. Face ID needs an HTTPS origin (see below); without one the purchase stays held, not paid.
+### Connect your own agent
 
-Payments are test payments from your own Sandbox account to your own Sandbox business account. No retailer order is placed.
+On the Agents tab of `/inbox`, add an agent by name and copy its key (shown once). Run `mcp_server.py` with `APPROVEACCEPT_AGENT_TOKEN` set to that key and `AA_URL` set to this app: `http://127.0.0.1:8780` on the same machine, or the HTTPS address of the public front service (`./start-host.sh`) for an agent elsewhere. The agent's name comes from its key, so it cannot buy as another agent. Set its limits and categories on the same tab.
 
-**Connect your agent.** On the Agents tab of `/inbox`, add an agent by name and copy its key (shown once). Run `mcp_server.py` with `APPROVEACCEPT_AGENT_TOKEN` set to that key and `AA_URL` set to this app: `http://127.0.0.1:8780` on the same machine, or the HTTPS address of the public front service (`./start-host.sh`) for an agent elsewhere. The agent's name comes from its key, so it cannot buy as another agent. Set its limits and categories on the same tab. Step 0 also saves one key under the name `Judge agent`.
+### Face ID on your phone
 
-No PayPal account? `LEASH_V2_SUBSTITUTE=1 APPROVEACCEPT_OWNER_TOKEN=<any 32 or more characters> python3 -B app.py` serves the same `/journey` on port 8753 against labelled local fakes, with no PayPal call.
+Passkeys need an HTTPS address. Start the public front service with `./start-host.sh`, give it an HTTPS address through a host or a tunnel you choose, and set `APPROVEACCEPT_PUBLIC_BASE_URL` and `APPROVEACCEPT_PASSKEY_ORIGIN` to that exact address before starting. See "Prepare a hosted sandbox demo". Without HTTPS, held purchases stay held, not paid.
 
 ## What works
 
@@ -62,49 +85,29 @@ Merchant names, prices, task text and source links in generic requests come from
 
 In substitute mode, a real model may exercise the MCP interface while all payment references remain `SUB` prefixed. An automated browser refusal is a test action, not the owner's decision. No physical phone approval or PayPal call is established by that test.
 
-## Run locally without PayPal credentials
+## Other entry points (advanced)
 
-You need Python 3.11 or newer and the OpenSSL command-line tool for passkey verification. The substitute mode uses local fake PayPal-shaped responses and marks every reference with `SUB`.
+`./journey.sh` is the supported way to start. Running `app.py` directly is for development:
 
-```sh
-LEASH_V2_SUBSTITUTE=1 python3 -B app.py
-```
+- `LEASH_V2_SUBSTITUTE=1 APPROVEACCEPT_OWNER_TOKEN=<32 or more characters> python3 -B app.py` serves the local stand-in on port 8753.
+- `python3 -B app.py` serves PayPal Sandbox on port 8752. It reads `APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_ID`, `APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_SECRET`, `APPROVEACCEPT_PAYPAL_SANDBOX_MERCHANT_ID` and `APPROVEACCEPT_OWNER_TOKEN` from the environment; `./journey.sh` sets them from step 0.
+- `./demo.sh` starts the older guided judge path on port 8879 with the local stand-in.
 
-Passkeys require a public HTTPS origin. Set the same fixed origin used by the phone page before starting the local substitute:
-
-```sh
-APPROVEACCEPT_PUBLIC_BASE_URL=https://approve.example.test \
-APPROVEACCEPT_PASSKEY_ORIGIN=https://approve.example.test \
-LEASH_V2_SUBSTITUTE=1 python3 -B app.py
-```
-
-The owner dashboard shows a one-time enrolment link on first use. After enrolment, the phone page invokes the platform authenticator for every manual approval. `signer_service.py` remains only as a labelled HMAC test double and is not connected to the app.
-
-Clone the repository with its Code button, enter the cloned folder, and run the command above.
-
-Open `http://127.0.0.1:8753`.
-
-For the guided judge path, use one command from this repository:
-
-```sh
-./demo.sh
-```
-
-Then open `http://127.0.0.1:8879`. The guided button creates one automatic purchase, one purchase held for Face ID, and one blocked request through the normal request API. This local route uses the labelled substitute. It makes no PayPal call and cannot prove a phone passkey.
-
-The spend decision is in `spend_rules.py`; the PayPal-shaped state machine remains in `leash.py`. The substitute path needs no sibling repository and no credentials.
+With the local stand-in and a fixed HTTPS origin, the phone page shows a one-time passkey enrolment link; `signer_service.py` is only a labelled HMAC test double and is not connected to the app. The spend decision is in `spend_rules.py`; the PayPal-shaped state machine is in `leash.py`.
 
 ## Run the checks
 
 ```sh
-python3 -B -m unittest -v test_spend_rules test_build test_viewport test_hosted_runtime
+python3 -B -m unittest test_agents_core test_stranger_fixes test_catalog_ai test_byok test_shopping_flow test_build test_security_regressions test_spend_rules test_viewport test_hosted_runtime test_loopback_auth test_buyer_return test_safe_refusal_retry test_merchant_grounding
 node design/check-tokens.cjs
 node design/check-contrast.cjs
 node design/check-stamps.cjs
 python3 hosting_check.py
 ```
 
-The Python checks run in substitute mode inside a temporary data folder. They do not touch the PayPal sandbox database.
+The Python checks run against the local stand-in inside a temporary data folder. They need no PayPal account and do not touch any Sandbox data.
+
+Optional dev dependency: [Playwright](https://playwright.dev) (`npm install playwright`, or `pip install playwright` and then `playwright install chromium`). It is used by the browser tests, the recording scripts and the rendered layer of `check-stamps.cjs`. Without it, `check-stamps.cjs` checks the HTML source only and prints `SKIPPED rendered check`. The app itself needs only the Python standard library; `anthropic` is needed only for AI ranking.
 
 ## Prepare a hosted sandbox demo
 
@@ -117,18 +120,6 @@ The public judge path is in `JUDGE-PATH.md`.
 Expose only the public service from `start-host.sh`; the direct `app.py` API is trusted loopback infrastructure and must not be exposed by a tunnel. For a phone-reachable approval link, set both `APPROVEACCEPT_PUBLIC_BASE_URL` and `APPROVEACCEPT_PASSKEY_ORIGIN` to the exact HTTPS origin supplied by a tunnel or host before starting the app. The relying-party ID comes from this configured origin, never from the request Host header. ApproveAccept does not open a tunnel itself.
 
 For a full Sandbox run with webhooks, `connect/prepare_fresh_run.py` creates a fresh private data directory and ports, an agent-only MCP key, and one exact HTTPS origin. When `LEASH_V2_WEBHOOK_PORT` and this run's `LEASH_V2_WEBHOOK_ID` are set, the public service forwards only `/webhooks/paypal` to the loopback listener for PayPal signature verification. `connect/register_fresh_webhook.py` creates a new Sandbox registration without deleting an older one. The public service never exposes the internal API port.
-
-## PayPal sandbox demo
-
-The sandbox mode reads its client ID and secret from macOS Keychain through the payment adapter. A hosted copy may read the same sandbox-only values from its secret manager. No credential belongs in this repository.
-
-```sh
-python3 -B app.py
-```
-
-Open `http://127.0.0.1:8752`.
-
-The sandbox is the hackathon and judge path. Live money is out of scope for this repository.
 
 ## Architecture
 

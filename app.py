@@ -650,8 +650,16 @@ def grant_allowance(b):
              json.dumps(categories) if categories else None))
         S.log(db, 'Owner', 'allowance-granted',
               f'Granted {name} up to {eur(per_purchase)} per purchase and {eur(monthly)} per month at {", ".join(merchants)}, until {expires}.')
+    # A limit is a rule for future requests. Requests already held stay held: each one is
+    # paid only through the Face ID decision bound to it, so a settings change never spends.
+    states = {r['id']: r['state'] for r in S.book.summary()['requests']}
+    with S.db() as db:
+        held = [r['id'] for r in db.execute('SELECT id FROM proposals WHERE agent=? ORDER BY at', (name,))
+                if states.get(r['id']) == 'authorized']
     return {'agent': name, 'merchants': merchants, 'per_purchase_cents': per_purchase,
-            'monthly_cents': monthly, 'expires_at': expires, 'status': 'active', 'categories': categories}
+            'monthly_cents': monthly, 'expires_at': expires, 'status': 'active', 'categories': categories,
+            'still_held': held,
+            'note': 'New limits apply to the next request. Requests already held still need your Face ID or Deny.' if held else ''}
 
 
 def revoke_allowance(name):
@@ -760,7 +768,8 @@ def spending_policy(name):
         lines += [f'Combined automatic spend: up to {eur(DEFAULT_RULES.daily_auto_cap)} per UTC day; {eur(automatic_spend_today())} used today.',
                   'Other merchants and larger purchases require owner review.']
         source = 'Configured demo rules (no owner allowance)'
-    lines += ['Allowed categories: ' + ', '.join(sorted(DEFAULT_RULES.allowed_categories)) + '. Other categories are blocked.',
+    categories = (allowance or {}).get('categories') or sorted(DEFAULT_RULES.allowed_categories)
+    lines += ['Allowed categories: ' + ', '.join(categories) + '. Other categories are blocked.',
               f'New monthly plans require review; plans above {eur(DEFAULT_RULES.subscription_monthly_cap)} per month are blocked.',
               'Merchant names, prices and source links are supplied by the agent. They are not a verified seller quote.',
               'This sandbox uses one configured PayPal test merchant. No real seller is paid.']

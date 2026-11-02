@@ -22,7 +22,19 @@ function staticCheck(src) {
   for (const m of src.matchAll(/>([^<>`$]*stamp[^<>`$]*)</gi)) hits.push(`${path.basename(file)} template text "${m[1].trim()}"`);
 }
 
+function playwrightAvailable() {
+  // Playwright is an optional dev dependency. Without it, the source check still runs and the rendered layer says it was skipped.
+  if (process.env.APPROVEACCEPT_FORCE_NO_PLAYWRIGHT === '1') return false;  // test seam
+  try { require.resolve('playwright'); return true; } catch (_) {}
+  const py = require('child_process').spawnSync('python3', ['-c', 'import playwright'], { encoding: 'utf8' });
+  return py.status === 0;
+}
+
 async function renderedCheck() {
+  if (!playwrightAvailable()) {
+    console.log('SKIPPED rendered check: Playwright is an optional dev dependency (npm install playwright, or pip install playwright and then playwright install chromium). The source check still ran.');
+    return false;
+  }
   let r;
   try {
     const { chromium } = require('playwright');
@@ -43,11 +55,12 @@ async function renderedCheck() {
   }
   r.classes.forEach(c => hits.push(`${url} rendered class .${c}`));
   r.text.forEach(t => hits.push(`${url} rendered text "${t}"`));
+  return true;
 }
 
 (async () => {
   staticCheck(fs.readFileSync(file, 'utf8'));
-  if (url) await renderedCheck();
+  const rendered = url ? await renderedCheck() : false;
   if (hits.length) { console.log(`FAIL check-stamps: ${hits.length} hit(s)\n` + [...new Set(hits)].join('\n')); process.exit(1); }
-  console.log(`PASS check-stamps: 0 hits in ${file}${url ? ' and rendered ' + url : ''}`);
+  console.log(`PASS check-stamps: 0 hits in ${file}${rendered ? ' and rendered ' + url : ' (source only)'}`);
 })().catch(e => { console.log('FAIL check-stamps: ' + e.message); process.exit(1); });

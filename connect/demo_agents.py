@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Demo: two named agents buy through the real MCP server, each with its own key.
 
-    AA_URL=http://127.0.0.1:8780 APPROVEACCEPT_OWNER_TOKEN=... python3 connect/demo_agents.py
+    python3 connect/demo_agents.py      (with ./journey.sh or ./journey.sh --no-paypal running)
+
+The owner key is read from ~/.config/approveaccept (or APPROVEACCEPT_OWNER_TOKEN if set).
 
 As the owner it creates a key and limits for "Claude Code" (hosting, database, domain;
 EUR 30 per item) and "GrokBot" (travel; EUR 50 per item). Then each agent sends
@@ -14,7 +16,24 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 URL = os.environ.get('AA_URL', 'http://127.0.0.1:8780').rstrip('/')
-OWNER = os.environ.get('APPROVEACCEPT_OWNER_TOKEN', '')
+def owner_key():
+    """The owner key of the app that is running at AA_URL: env first, then the step 0 files."""
+    candidates = [os.environ.get('APPROVEACCEPT_OWNER_TOKEN', '')]
+    home = Path(os.environ.get('APPROVEACCEPT_HOME') or Path.home() / '.config' / 'approveaccept')
+    for name in ('sandbox.env', 'no-paypal.env'):
+        f = home / name
+        if f.is_file():
+            candidates += [l.split("'")[1] for l in f.read_text().splitlines() if l.startswith("export APPROVEACCEPT_OWNER_TOKEN='")]
+    for key in filter(None, candidates):
+        try:
+            urllib.request.urlopen(urllib.request.Request(URL + '/api/state', headers={'Authorization': 'Bearer ' + key}), timeout=10)
+            return key
+        except Exception:
+            continue
+    return ''
+
+
+OWNER = owner_key()
 AGENTS = {'Claude Code': {'categories': ['hosting', 'database', 'domain'], 'per': 3000, 'month': 12000},
           'GrokBot': {'categories': ['travel'], 'per': 5000, 'month': 20000}}
 ASKS = [('Claude Code', 'Domain name .com, 1 year', 'Sandbox dev services', 'domain', 1200,
@@ -44,7 +63,7 @@ def mcp(key, calls):
 
 def main():
     if len(OWNER) < 32:
-        raise SystemExit('Set APPROVEACCEPT_OWNER_TOKEN to the owner key from step 0.')
+        raise SystemExit('No owner key found. Start the app first: ./journey.sh --no-paypal, or step 0 then ./journey.sh')
     keys = {}
     for name, p in AGENTS.items():
         keys[name] = owner('/api/agent-key', {'agent': name})['key']
