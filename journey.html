@@ -1,0 +1,131 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>ApproveAccept</title><style>
+:root{--ground:oklch(0.19 0.018 55);--panel:oklch(0.235 0.02 55);--raise:oklch(0.28 0.022 55);--ink:oklch(0.95 0.012 80);--mute:oklch(0.73 0.02 70);--line:oklch(0.35 0.02 55);--acc:oklch(0.85 0.13 190);--accink:oklch(0.22 0.04 200);--accsoft:oklch(0.85 0.13 190 / .16);--red:oklch(0.68 0.2 25);--ok:oklch(0.8 0.12 160);--warn:oklch(0.82 0.12 80);--disp:"Unbounded",ui-sans-serif,sans-serif;--sans:"Hanken Grotesk",ui-sans-serif,sans-serif;color-scheme:dark}
+:root[data-theme=light]{--ground:oklch(0.965 0.012 80);--panel:oklch(0.99 0.006 80);--raise:oklch(0.93 0.015 75);--ink:oklch(0.25 0.025 55);--mute:oklch(0.5 0.02 60);--line:oklch(0.86 0.015 70);--acc:oklch(0.5 0.12 200);--accink:oklch(0.98 0.01 200);--accsoft:oklch(0.5 0.12 200 / .12);--red:oklch(0.55 0.19 25);--ok:oklch(0.5 0.12 160);--warn:oklch(0.46 0.12 70);color-scheme:light}
+*{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.45 var(--sans);overflow-x:hidden}
+main{width:100%;max-width:460px;margin:auto;padding:16px 16px 48px}
+.top{display:flex;align-items:center;gap:8px}.brand{font-size:19px;font-weight:800}.brand i{color:var(--acc);font-style:normal}.sp{flex:1}
+.chip{border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--mute);font-size:12px;white-space:nowrap}
+.kicker{color:var(--acc);font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.glow{border:1px solid var(--line);border-radius:24px;background:radial-gradient(110% 90% at 0 0,var(--accsoft),transparent 62%),var(--raise);position:relative;overflow:hidden}
+h1{font:800 clamp(28px,8vw,36px)/1.06 var(--disp);margin:26px 0 6px;letter-spacing:-.01em}
+.lede{color:var(--mute);margin:0 0 18px}
+button{border:0;border-radius:14px;padding:12px 14px;background:var(--acc);color:var(--accink);font:800 15px var(--sans);cursor:pointer;min-height:48px}
+button.quiet{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:700}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+a{color:var(--acc)}
+.limits{padding:14px 16px;display:flex;gap:12px;align-items:center}
+.limits b{font-size:17px}.limits .lim{flex:1}.limits p{margin:2px 0 0;color:var(--mute);font-size:13px}
+.limits button{min-height:36px;padding:6px 12px;font-size:13px}
+.edit{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 14px}
+.edit label{display:grid;gap:4px;color:var(--mute);font-size:12px}
+.edit input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 15px var(--sans)}
+.edit .wide{grid-column:1/-1}
+.moods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.moods .surprise{grid-column:1/-1;min-height:64px;font-size:19px;border-radius:18px;box-shadow:0 0 0 6px var(--accsoft)}
+.moods button[aria-pressed=true]{outline:2px solid var(--ink);outline-offset:3px}
+#stage{margin-top:22px}
+.wait{padding:22px;color:var(--mute)}
+.dots{display:inline-flex;gap:5px;margin-left:6px}.dots i{width:6px;height:6px;border-radius:50%;background:var(--acc);animation:p 1s infinite ease-in-out}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes p{0%,100%{opacity:.25}50%{opacity:1}}
+.track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;padding:2px 2px 6px}
+.track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 calc(100% - 28px);scroll-snap-align:start;padding:20px;display:flex;flex-direction:column;gap:10px;overflow-wrap:anywhere}
+.slide[aria-current=true]{border-color:var(--acc)}
+.slide h2{font:800 23px/1.12 var(--disp);margin:2px 0 0}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.price{font-size:28px;font-weight:800}
+.badge{border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}
+.badge.now{background:var(--accsoft);color:var(--acc)}.badge.fid{border:1px solid var(--warn);color:var(--warn)}
+.why{margin:0;color:var(--ink)}
+.use{margin:0;padding-left:20px;color:var(--mute);font-size:14px}
+.slide .yes{margin-top:auto;width:100%}
+.pager{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.pager button{width:10px;height:10px;min-height:0;padding:0;border-radius:50%;background:var(--line)}
+.pager button[aria-current=true]{background:var(--acc);width:26px;border-radius:6px}
+.hint{text-align:center;color:var(--mute);font-size:12px;margin:8px 0 0}
+.card{padding:22px;display:flex;flex-direction:column;gap:12px}
+.card h2{font:800 25px/1.1 var(--disp);margin:0}
+.card p{margin:0;color:var(--mute)}
+.receipt dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:4px 0 0;font-size:14px}
+.receipt dt{color:var(--mute)}.receipt dd{margin:0;text-align:right;font-weight:700;overflow-wrap:anywhere}
+.receipt .amt{font-size:40px;font-weight:800;line-height:1}
+.tick{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--accsoft);color:var(--acc);font-size:24px;font-weight:800}
+.err{color:var(--red)}
+.rank{margin:0 0 10px;font-size:12.5px;color:var(--mute);display:flex;gap:8px;align-items:baseline}.rank b{font-size:10.5px;letter-spacing:.08em;border-radius:6px;padding:2px 6px;flex:none}.rank.ai b{background:var(--accsoft);color:var(--acc)}.rank.off b{border:1px solid var(--warn);color:var(--warn)}
+.timer{font-variant-numeric:tabular-nums}
+.foot{color:var(--mute);font-size:12px;margin-top:22px}
+form.gate{padding:18px;display:grid;gap:10px;margin-top:22px}
+form.gate input{padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:15px var(--sans)}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:.8}.track{scroll-behavior:auto}}
+</style></head><body><main>
+<header class=top><span class=brand>ApproveAccept<i>.</i></span><span class=sp></span><span class=chip id=mode>PayPal Sandbox</span><span class="chip timer" id=clock hidden></span></header>
+
+<form class="gate glow" id=gate hidden><span class=kicker>Owner sign-in</span><p class=lede style="margin:0">Your ideas and limits are private. Enter the owner key set in <code>APPROVEACCEPT_OWNER_TOKEN</code>.</p><input type=password id=key autocomplete=current-password aria-label="Owner key" required><button>Sign in</button><span class=err id=gate-err role=status></span></form>
+
+<section id=app hidden>
+ <h1>Tap a mood.<br>Swipe. Say yes.</h1>
+ <p class=lede>Your agent brings three ideas with its reasons. Under your limit it buys at once. Over it, you confirm with Face ID.</p>
+ <div class=glow>
+  <div class=limits><div class=lim><span class=kicker>Your limits</span><br><b id=lim-line>€50 per purchase · €200 a month</b><p id=lim-note>Set on your first tap. Change them any time.</p></div><button class=quiet id=edit-btn aria-expanded=false>Edit</button></div>
+  <div class=edit id=edit hidden><label>Per purchase · EUR<input id=per type=number min=1 max=10000 step=1 value=50></label><label>Each month · EUR<input id=month type=number min=1 max=10000 step=1 value=200></label><label class=wide>What you like<input id=persona maxlength=600 value="Live jazz, vegetarian, books. No horror."></label></div>
+ </div>
+ <div class=moods><button class=surprise data-mode=surprise>Surprise me</button><button class=quiet data-mode=gift>Gift ideas</button><button class=quiet data-mode=date>Date ideas</button></div>
+ <div id=stage aria-live=polite></div>
+ <p class=foot>Sandbox only. Payments go to the ApproveAccept Sandbox shop; no retailer order is placed and no live money moves.</p>
+</section>
+</main><script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=c=>'€'+(c/100).toFixed(c%100?2:0);
+let status=null,session=null,idx=0,started=0,tick=null,poll=null,busy=false;
+async function api(path,body){const r=await fetch(path,body===undefined?{credentials:'same-origin'}:{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok){const e=Error(j.error||'Request failed');e.status=r.status;throw e;}return j;}
+function startClock(){if(started)return;started=performance.now();const c=$('#clock');c.hidden=false;tick=setInterval(()=>{c.textContent=((performance.now()-started)/1000).toFixed(0)+' s'},250);}
+function stopClock(){clearInterval(tick);if(started)$('#clock').textContent=((performance.now()-started)/1000).toFixed(1)+' s';}
+function paintLimits(){const a=status?.allowance;if(a){$('#lim-line').textContent=`${eur(a.per_purchase_cents)} per purchase · ${eur(a.monthly_cents)} a month`;$('#lim-note').textContent=`${eur(a.remaining_cents)} left this month · ${status.payment_mode==='substitute'?'local substitute, no PayPal call':'PayPal Sandbox, no live money'}`;$('#per').value=a.per_purchase_cents/100;$('#month').value=a.monthly_cents/100;}if(status?.setup?.persona)$('#persona').value=status.setup.persona;$('#mode').textContent=status?.payment_mode==='substitute'?'Local substitute':'PayPal Sandbox';}
+async function load(){try{status=await api('/api/shopping/status');$('#gate').hidden=true;$('#app').hidden=false;paintLimits();}catch(e){if(e.status===401){$('#gate').hidden=false;$('#app').hidden=true;}else{$('#app').hidden=false;$('#stage').innerHTML=`<p class=err>${esc(e.message)}</p>`;}}}
+$('#gate').onsubmit=async e=>{e.preventDefault();try{await api('/api/session',{token:$('#key').value});$('#key').value='';await load();}catch(x){$('#gate-err').textContent=x.message;}};
+$('#edit-btn').onclick=()=>{const ed=$('#edit'),open=ed.hidden;ed.hidden=!open;$('#edit-btn').setAttribute('aria-expanded',String(open));$('#edit-btn').textContent=open?'Done':'Edit';};
+function wanted(){return{per:Math.round(Number($('#per').value)*100),month:Math.round(Number($('#month').value)*100),persona:$('#persona').value.trim()};}
+async function ensureSetup(){const w=wanted(),a=status?.allowance,s=status?.setup;
+ const same=a&&s&&s.automatic&&a.status==='active'&&a.per_purchase_cents===w.per&&a.monthly_cents===w.month&&s.persona===w.persona&&Date.parse(a.expires_at)>Date.now();
+ if(!same){status=await api('/api/shopping/setup',{per_purchase_cents:w.per,monthly_cents:w.month,days:7,automatic:true,persona:w.persona});paintLimits();}}
+function setMoods(dis){document.querySelectorAll('[data-mode]').forEach(b=>b.disabled=dis);}
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=async()=>{if(busy)return;busy=true;setMoods(true);clearInterval(poll);startClock();
+ document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+ $('#stage').innerHTML=`<div class="glow wait">Your agent is picking three ideas<span class=dots><i></i><i></i><i></i></span></div>`;
+ try{await ensureSetup();session=await api('/api/ideas',{mode:b.dataset.mode,source:'ai',request_key:crypto.randomUUID().replaceAll('-',''),buy_automatically:false});session.ideas=session.ideas.slice(0,3);idx=0;paintReel();reveal();}
+ catch(e){$('#stage').innerHTML=`<div class="glow card"><p class=err>${esc(e.message)}</p></div>`;}
+ finally{busy=false;setMoods(false);}});
+function over(i){return i.quote.cents>(status?.allowance?.per_purchase_cents||0);}
+function slide(i,n){const fid=over(i);return `<article class="glow slide" data-n="${n}" aria-roledescription=slide aria-label="Idea ${n+1} of ${session.ideas.length}" aria-current="${n===idx}">
+ <span class=kicker>Idea ${n+1} of ${session.ideas.length} · ${esc(session.mode_context?.title||session.mode)}</span>
+ <h2>${esc(i.action?.title||i.title)}</h2>${i.action?`<p class=why style="color:var(--mute)">${esc(i.title)}</p>`:''}
+ <div class=row><span class=price>${eur(i.quote.cents)}</span><span class="badge ${fid?'fid':'now'}">${fid?'Over your limit · Face ID':'Inside your limit · buys now'}</span></div>
+ <p class=why>${esc(i.why)}</p>${i.action?.steps?`<ol class=use>${i.action.steps.slice(0,3).map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`:''}
+ <button class=yes data-yes="${n}">Yes, this one</button></article>`}
+function rankLine(){const r=session.ranking||{};return r.ai?`<p class="rank ai"><b>AI</b> Ranked by ${esc(r.model)} with your key · every reason quotes your words and the product's own facts</p>`:`<p class="rank off"><b>No AI</b> ${esc(r.fallback_reason||'AI ranking was not used.')} Showing local matching.</p>`;}
+function paintReel(){$('#stage').innerHTML=rankLine()+`<div role=region aria-roledescription=carousel aria-label="Three ideas"><div class=track id=track tabindex=0>${session.ideas.map(slide).join('')}</div><nav class=pager aria-label="Choose an idea">${session.ideas.map((_,n)=>`<button data-go="${n}" aria-label="Idea ${n+1}" aria-current="${n===idx}"></button>`).join('')}</nav><p class=hint>Swipe for the other ideas</p></div>`;
+ const t=$('#track');t.addEventListener('scroll',()=>{const w=t.children[0].offsetWidth+12;const n=Math.round(t.scrollLeft/w);if(n!==idx){idx=Math.max(0,Math.min(n,session.ideas.length-1));document.querySelectorAll('.slide').forEach((s,k)=>s.setAttribute('aria-current',String(k===idx)));document.querySelectorAll('[data-go]').forEach((d,k)=>d.setAttribute('aria-current',String(k===idx)));}},{passive:true});
+ t.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();go(idx+(e.key==='ArrowRight'?1:-1));}};
+ document.querySelectorAll('[data-go]').forEach(d=>d.onclick=()=>go(Number(d.dataset.go)));
+ document.querySelectorAll('[data-yes]').forEach(y=>y.onclick=()=>yes(Number(y.dataset.yes)));}
+function reveal(){$('#stage').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}
+function go(n){const t=$('#track');n=Math.max(0,Math.min(n,t.children.length-1));t.scrollTo({left:t.children[n].offsetLeft-t.children[0].offsetLeft,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+async function yes(n){if(busy)return;busy=true;setMoods(true);document.querySelectorAll('[data-yes]').forEach(b=>b.disabled=true);const i=session.ideas[n];
+ try{const p=await api('/api/ideas/choose',{session_id:session.id,sku:i.sku,buy_automatically:true,owner_review_if_over:true});
+  if(p.state==='captured'){receipt(i,p,'auto');}else if(p.approval_url){faceId(i,p);}else{$('#stage').innerHTML=`<div class="glow card"><h2>Not bought</h2><p>${esc((p.reasons||[]).join(' ')||'Your rules blocked this purchase. Nothing was sent to PayPal.')}</p></div>`;stopClock();}}
+ catch(e){$('#stage').insertAdjacentHTML('beforeend',`<p class=err>${esc(e.message)}</p>`);}
+ finally{busy=false;setMoods(false);}}
+function faceId(i,p){const reason=(p.over_limit_reasons||[])[0]||'This purchase is outside your automatic limit.';
+ $('#stage').innerHTML=`<div class="glow card"><span class=kicker>One decision</span><h2>${esc(i.title)} · ${eur(i.quote.cents)}</h2><p>${esc(reason)} Nothing is charged until you approve this exact purchase with Face ID.</p><a id=fid href="${esc(p.approval_url)}" target=_blank rel=noopener><button style="width:100%">Approve with Face ID</button></a><p class=hint id=fid-state>${status?.payment_mode==='substitute'?'Held in the local substitute':'Held in PayPal Sandbox'} · not paid yet</p></div>`;reveal();
+ poll=setInterval(async()=>{try{const s=await api('/api/state');const row=(s.proposals||[]).find(x=>x.id===p.id);const m=row?.money;if(m?.state==='captured'){clearInterval(poll);receipt(i,{...p,capture_id:m.capture_id,order_id:m.order_id},'faceid');}else if(m&&['voided','refused'].includes(m.state)){clearInterval(poll);$('#stage').innerHTML=`<div class="glow card"><h2>Declined</h2><p>The Sandbox hold was released. Nothing was charged.</p></div>`;stopClock();}}catch(e){}},1500);}
+async function receipt(i,p,how){stopClock();let left='';try{status=await api('/api/shopping/status');paintLimits();left=status.allowance?eur(status.allowance.remaining_cents):'';}catch(e){}
+ const secs=started?((performance.now()-started)/1000).toFixed(1):'';const sub=status?.payment_mode==='substitute';
+ $('#stage').innerHTML=`<div class="glow card receipt" id=receipt><div class=row><span class=tick aria-hidden=true>✓</span><span class=kicker>${sub?'Simulated receipt':'PayPal Sandbox receipt'}</span></div>
+ <div class=amt>${eur(i.quote.cents)}</div><h2>${esc(i.title)}</h2>
+ <dl><dt>How</dt><dd>${how==='auto'?'Inside your limit, bought automatically':'Approved with Face ID'}</dd><dt>Paid to</dt><dd>ApproveAccept Sandbox shop</dd><dt>${sub?'Reference':'PayPal capture'}</dt><dd>${esc(p.capture_id||'pending')}</dd><dt>Request</dt><dd>${esc(p.id)}</dd>${left?`<dt>Left this month</dt><dd>${left}</dd>`:''}${secs?`<dt>Mood to receipt</dt><dd>${secs} s</dd>`:''}</dl>
+ <p>${sub?'Local substitute: no PayPal call was made.':'Test payment in PayPal Sandbox. No live money moved and no retailer order was placed.'}</p></div>`;reveal();}
+load();
+</script></body></html>

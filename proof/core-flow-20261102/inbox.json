@@ -1,0 +1,21 @@
+{
+  "base": "http://127.0.0.1:8934",
+  "started": "2026-11-02T10:03:42.047Z",
+  "steps": [
+    "01-empty-inbox",
+    "02-waiting-grouped-by-agent",
+    "03-paid-history",
+    "04-face-id-link",
+    "05-agents-limits",
+    "06-surprise-me-tab"
+  ],
+  "errors": [],
+  "driver": [
+    "Claude Code: key created, EUR 30 per item, hosting, database, domain",
+    "GrokBot: key created, EUR 50 per item, travel",
+    "{\"agent\": \"Claude Code\", \"title\": \"Domain name .com, 1 year\", \"eur\": 12.0, \"id\": \"BUY11034348846f\", \"state\": \"captured\", \"capture_id\": \"1GS9141341013832T\", \"error\": null}",
+    "{\"agent\": \"Claude Code\", \"title\": \"Hosting plan, Pro, 1 month\", \"eur\": 20.0, \"id\": \"BUY11035002ecbc\", \"state\": \"captured\", \"capture_id\": \"5A205326EY615350C\", \"error\": null}",
+    "{\"agent\": \"GrokBot\", \"title\": \"Flight Paris to Lisbon, economy\", \"eur\": 89.0, \"id\": \"BUY1103558b9ebe\", \"state\": \"authorized\", \"capture_id\": null, \"error\": null}"
+  ],
+  "approval_link_shown": "Open the Face ID decision"
+}

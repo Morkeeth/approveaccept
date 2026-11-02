@@ -1,0 +1,24 @@
+{
+  "mode": "PayPal Sandbox provider GET; no write",
+  "request_id": "BUY1022445066ce",
+  "local_state": "captured",
+  "order_id": "81R00547WH058993X",
+  "provider_order_status": "COMPLETED",
+  "authorization_id": "74R01878S6600373Y",
+  "provider_authorization_status": "CAPTURED",
+  "capture_id": "8T751690Y6328413J",
+  "provider_capture_status": "COMPLETED",
+  "order_amount_matches_local": true
+}
+{
+  "mode": "PayPal Sandbox provider GET; no write",
+  "request_id": "BUY1022572dd4c2",
+  "local_state": "authorized",
+  "order_id": "5DT20218AE353024T",
+  "provider_order_status": "COMPLETED",
+  "authorization_id": "62A46874XB493674F",
+  "provider_authorization_status": "CREATED",
+  "capture_id": null,
+  "provider_capture_status": null,
+  "order_amount_matches_local": true
+}

@@ -1,0 +1,48 @@
+{
+  "base": "http://127.0.0.1:8932",
+  "started": "2026-11-02T09:22:39.691Z",
+  "legs": [
+    {
+      "name": "A-inside",
+      "ideas": [
+        {
+          "title": "Signed poetry book",
+          "over": false
+        },
+        {
+          "title": "Jazz club, entry for two",
+          "over": false
+        },
+        {
+          "title": "Vegetarian tasting menu for two",
+          "over": true
+        }
+      ],
+      "chosen": 0,
+      "seconds": 12.311,
+      "result": "✓\nPAYPAL SANDBOX RECEIPT\n€32\nSigned poetry book\nHow\nInside your limit, bought automatically\nPaid to\nApproveAccept Sandbox shop\nPayPal capture\n8T751690Y6328413J\nRequest\nBUY1022445066ce\nLeft this month\n€168\nMood to receipt\n9.7 s\n\nTest payment in PayPal Sandbox. No live money moved and no retailer order was placed."
+    },
+    {
+      "name": "B-over",
+      "ideas": [
+        {
+          "title": "Signed poetry book",
+          "over": false
+        },
+        {
+          "title": "Jazz club, entry for two",
+          "over": false
+        },
+        {
+          "title": "Vegetarian tasting menu for two",
+          "over": true
+        }
+      ],
+      "chosen": 2,
+      "seconds": 8.855,
+      "result": "ONE DECISION\nVegetarian tasting menu for two · €58\n\nPurchase exceeds the allowance limit of EUR 50.00 per purchase. Nothing is charged until you approve this exact purchase with Face ID.\n\nApprove with Face ID\n\nHeld in PayPal Sandbox · not paid yet",
+      "note": "Held for Face ID. Headless browser cannot perform Face ID; nothing captured."
+    }
+  ],
+  "errors": []
+}

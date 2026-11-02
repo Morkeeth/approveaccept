@@ -1,0 +1,4 @@
+data/
+data-substitute/
+__pycache__/
+proof/*.db

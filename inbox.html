@@ -1,0 +1,114 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>ApproveAccept</title><style>
+:root{--ground:oklch(0.19 0.018 55);--panel:oklch(0.235 0.02 55);--raise:oklch(0.28 0.022 55);--ink:oklch(0.95 0.012 80);--mute:oklch(0.73 0.02 70);--line:oklch(0.35 0.02 55);--acc:oklch(0.85 0.13 190);--accink:oklch(0.22 0.04 200);--accsoft:oklch(0.85 0.13 190 / .16);--red:oklch(0.68 0.2 25);--ok:oklch(0.8 0.12 160);--warn:oklch(0.82 0.12 80);--disp:"Unbounded",ui-sans-serif,sans-serif;--sans:"Hanken Grotesk",ui-sans-serif,sans-serif;color-scheme:dark}
+:root[data-theme=light]{--ground:oklch(0.965 0.012 80);--panel:oklch(0.99 0.006 80);--raise:oklch(0.93 0.015 75);--ink:oklch(0.25 0.025 55);--mute:oklch(0.5 0.02 60);--line:oklch(0.86 0.015 70);--acc:oklch(0.5 0.12 200);--accink:oklch(0.98 0.01 200);--accsoft:oklch(0.5 0.12 200 / .12);--red:oklch(0.55 0.19 25);--ok:oklch(0.5 0.12 160);--warn:oklch(0.46 0.12 70);color-scheme:light}
+*{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.45 var(--sans);overflow-x:hidden}
+main{width:100%;max-width:520px;margin:auto;padding:16px 16px 48px}
+.top{display:flex;align-items:center;gap:8px}.brand{font-size:19px;font-weight:800}.brand i{color:var(--acc);font-style:normal}.sp{flex:1}
+.chip{border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--mute);font-size:12px;white-space:nowrap}
+.kicker{color:var(--acc);font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.glow{border:1px solid var(--line);border-radius:22px;background:radial-gradient(110% 90% at 0 0,var(--accsoft),transparent 62%),var(--raise);position:relative;overflow:hidden}
+h1{font:800 clamp(26px,7.5vw,34px)/1.06 var(--disp);margin:22px 0 6px;letter-spacing:-.01em}
+h2{font:800 15px var(--sans);margin:22px 0 10px;color:var(--mute);text-transform:uppercase;letter-spacing:.07em}
+.lede{color:var(--mute);margin:0 0 16px}
+button{border:0;border-radius:13px;padding:10px 14px;background:var(--acc);color:var(--accink);font:800 14px var(--sans);cursor:pointer;min-height:44px}
+button.quiet{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:700}
+button.no{background:transparent;color:var(--red);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+a{color:var(--acc)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:16px;padding:4px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.tabs button{min-height:40px;background:transparent;color:var(--mute);font-weight:700}
+.tabs button[aria-selected=true]{background:var(--raise);color:var(--ink)}
+.tabs .n{display:inline-block;min-width:20px;margin-left:4px;padding:0 6px;border-radius:999px;background:var(--acc);color:var(--accink);font-size:11px;line-height:18px}
+.group{margin-bottom:14px}
+.agent{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-weight:800}
+.dot{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--accsoft);color:var(--acc);font-size:12px}
+.req{padding:16px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.req .row{display:flex;align-items:baseline;gap:10px;justify-content:space-between}
+.req .t{font-weight:800;font-size:16px}.req .amt{font-size:22px;font-weight:800;white-space:nowrap}
+.req .why{margin:0;color:var(--ink)}
+.rule{font-size:12.5px;color:var(--warn)}
+.acts{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}.acts .wide{grid-column:1/-1}
+.list{border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden}
+.item{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:12px 14px;border-top:1px solid var(--line)}.item:first-child{border-top:0}
+.item b{font-weight:700}.item .m{color:var(--mute);font-size:12.5px;overflow-wrap:anywhere}.item .r{text-align:right;font-weight:800}
+.tag{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px}.tag.auto{background:var(--accsoft);color:var(--acc)}.tag.fid{border:1px solid var(--warn);color:var(--warn)}.tag.blk{border:1px solid var(--red);color:var(--red)}.tag.void{border:1px solid var(--line);color:var(--mute)}
+.empty{padding:18px;color:var(--mute)}
+.perm{padding:16px;margin-bottom:12px;display:grid;gap:10px}
+.perm .head{display:flex;align-items:center;gap:8px}.perm .head b{flex:1;font-size:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:grid;gap:4px;color:var(--mute);font-size:12px}
+input[type=number],input[type=text]{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 15px var(--sans)}
+.cats{display:flex;flex-wrap:wrap;gap:6px}.cats label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--ink);font-size:13px;cursor:pointer}
+.cats input{accent-color:var(--acc)}
+.meter{height:6px;border-radius:6px;background:var(--line);overflow:hidden}.meter i{display:block;height:100%;background:var(--acc)}
+.key{font:600 12.5px ui-monospace,monospace;padding:10px;border-radius:10px;background:var(--panel);border:1px dashed var(--acc);overflow-wrap:anywhere}
+.err{color:var(--red)}.note{color:var(--mute);font-size:12.5px;margin:0}
+form.gate{padding:18px;display:grid;gap:10px;margin-top:22px}
+form.gate input{padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:15px var(--sans)}
+.fun{padding:22px;display:grid;gap:12px}.fun h3{font:800 22px/1.1 var(--disp);margin:0}
+.foot{color:var(--mute);font-size:12px;margin-top:22px}
+</style></head><body><main>
+<header class=top><span class=brand>ApproveAccept<i>.</i></span><span class=sp></span><span class=chip id=mode>PayPal Sandbox</span></header>
+<form class="gate glow" id=gate hidden><span class=kicker>Owner sign-in</span><p class=lede style="margin:0">You approve what your agents buy. Enter the owner key from step 0.</p><input type=password id=key autocomplete=current-password aria-label="Owner key" required><button>Sign in</button><span class=err id=gate-err role=status></span></form>
+<section id=app hidden>
+ <h1>Your agents ask.<br>PayPal holds.<br>You decide.</h1>
+ <p class=lede>Each agent sends its purchase to PayPal with its own name. Inside the limit you set, it is paid. Over it, it waits here for your Face ID.</p>
+ <nav class=tabs role=tablist><button role=tab id=t-req aria-selected=true>Requests<span class=n id=waiting-n hidden></span></button><button role=tab id=t-agents aria-selected=false>Agents</button><button role=tab id=t-fun aria-selected=false>Surprise me</button></nav>
+ <section id=p-req role=tabpanel>
+  <h2>Waiting for you</h2><div id=waiting></div>
+  <h2>Paid</h2><div class=list id=paid></div>
+  <h2>Stopped</h2><div class=list id=stopped></div>
+ </section>
+ <section id=p-agents role=tabpanel hidden>
+  <h2>Your agents and their limits</h2><div id=agents></div>
+  <h2>Add an agent</h2>
+  <form class="glow perm" id=add><label>Agent name<input type=text id=add-name maxlength=80 placeholder="Claude Code" required></label><p class=note>A key is created for it and shown once. Set its limits after.</p><button>Create agent key</button><div id=add-out></div></form>
+ </section>
+ <section id=p-fun role=tabpanel hidden>
+  <div class="glow fun"><span class=kicker>The fun e-commerce future</span><h3>Tap a mood. Swipe. Say yes.</h3><p class=note>Your shopping agent brings three ideas, ranked by AI against your own words, and buys inside its limit.</p><a href="/journey"><button style="width:100%">Open Surprise me</button></a></div>
+ </section>
+ <p class=foot>Sandbox only. All payments go to the PayPal Sandbox test merchant. No live money moves.</p>
+</section>
+</main><script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=c=>'€'+(c/100).toFixed(c%100?2:0),CATS=['hosting','database','domain','travel','gifts','experiences'],MERCHANTS=['Sandbox dev services','Sandbox travel'];
+let state=null,shownKey=null,editing=new Set(),timer=null;
+async function api(path,body){const r=await fetch(path,body===undefined?{credentials:'same-origin'}:{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok){const e=Error(j.error||'Request failed');e.status=r.status;throw e;}return j;}
+const initials=n=>n.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const when=t=>String(t||'').slice(11,16);
+function rule(p){const c=(p.checks||[]).find(x=>!x[1]);return c?c[2]:'';}
+function paintReq(){const ps=(state.proposals||[]).filter(p=>p.id.startsWith('BUY'));
+ const wait=ps.filter(p=>p.money?.state==='authorized'),paid=ps.filter(p=>p.money?.state==='captured'),stopped=ps.filter(p=>p.outcome==='blocked'||p.money?.state==='voided');
+ const n=$('#waiting-n');n.hidden=!wait.length;n.textContent=wait.length;
+ const groups={};wait.forEach(p=>(groups[p.agent]=groups[p.agent]||[]).push(p));
+ $('#waiting').innerHTML=Object.keys(groups).length?Object.entries(groups).map(([a,list])=>`<div class=group><p class=agent><span class=dot>${esc(initials(a))}</span>${esc(a)}</p>${list.map(p=>`<article class="glow req" data-id="${esc(p.id)}"><div class=row><span class=t>${esc(p.title)}</span><span class=amt>${eur(p.cents)}</span></div><p class=why>${esc(p.why)}</p><span class=rule>${esc(rule(p)||'Needs your decision.')}</span><p class=note>Held in PayPal as "${esc(p.money?.purpose||'')}"</p><div class=acts><button data-approve="${esc(p.id)}">Approve with Face ID</button><button class=no data-deny="${esc(p.id)}">Deny</button><button class="quiet wide" data-raise="${esc(p.agent)}" data-cents="${p.cents}">Raise ${esc(p.agent)}'s limit to ${eur(p.cents)}</button></div><div class=out></div></article>`).join('')}</div>`).join(''):'<div class="glow empty">Nothing waits for you. Agents inside their limits are paid automatically.</div>';
+ $('#paid').innerHTML=paid.length?paid.map(p=>`<div class=item><b>${esc(p.title)}</b><span class=r>${eur(p.cents)}</span><span class=m>sent by ${esc(p.agent)} · ${when(p.at)} · PayPal ${esc(p.money?.capture_id)}</span><span>${p.requires_passkey?'<span class="tag fid">Face ID</span>':'<span class="tag auto">Inside limit</span>'}</span></div>`).join(''):'<div class=empty>No payments yet.</div>';
+ $('#stopped').innerHTML=stopped.length?stopped.map(p=>`<div class=item><b>${esc(p.title)}</b><span class=r>${eur(p.cents)}</span><span class=m>sent by ${esc(p.agent)} · ${esc(p.outcome==='blocked'?rule(p):'You denied it. The PayPal hold was released.')}</span><span>${p.outcome==='blocked'?'<span class="tag blk">Blocked</span>':'<span class="tag void">Denied</span>'}</span></div>`).join(''):'<div class=empty>Nothing stopped.</div>';
+ document.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>approve(b));
+ document.querySelectorAll('[data-deny]').forEach(b=>b.onclick=()=>deny(b));
+ document.querySelectorAll('[data-raise]').forEach(b=>b.onclick=()=>raise(b.dataset.raise,Number(b.dataset.cents),b));}
+async function approve(b){const out=b.closest('.req').querySelector('.out');try{const r=await api('/api/approval-link',{id:b.dataset.approve});out.innerHTML=`<p class=note>Open this on your phone and confirm with Face ID. Nothing is paid before that.</p><a href="${esc(r.approval_url)}" target=_blank rel=noopener>Open the Face ID decision</a>`;}catch(e){out.innerHTML=`<p class=err>${esc(e.message)}</p>`;}}
+async function deny(b){b.disabled=true;try{await api('/api/decide',{id:b.dataset.deny,accept:false});await load();}catch(e){b.closest('.req').querySelector('.out').innerHTML=`<p class=err>${esc(e.message)}</p>`;b.disabled=false;}}
+function allowance(a){return (state.allowances||[]).find(x=>x&&x.agent===a);}
+async function grant(agent,per,month,cats){const a=allowance(agent);return api('/api/allowance',{agent,merchants:a?.merchants?.length?a.merchants:MERCHANTS,per_purchase_cents:per,monthly_cents:Math.max(month,per),categories:cats,days:30});}
+async function raise(agent,cents,b){const a=allowance(agent);b.disabled=true;try{await grant(agent,cents,a?a.monthly_cents:cents*4,a?.categories||['hosting','database','domain','travel']);await load();}catch(e){b.closest('.req').querySelector('.out').innerHTML=`<p class=err>${esc(e.message)}</p>`;b.disabled=false;}}
+function paintAgents(){const names=[...new Set([...(state.agent_keys||[]).map(k=>k.agent),...(state.allowances||[]).filter(Boolean).map(a=>a.agent)])].filter(n=>n!=='Shopping agent'&&!['Concierge','Gifter','Errands'].includes(n));
+ if(editing.size)return;
+ $('#agents').innerHTML=names.length?names.map(n=>{const a=allowance(n),k=(state.agent_keys||[]).find(x=>x.agent===n),used=a?a.monthly_cents-a.remaining_cents:0,pct=a?Math.min(100,Math.round(used*100/a.monthly_cents)):0,cats=a?.categories||[];
+ return `<form class="glow perm" data-agent="${esc(n)}"><div class=head><span class=dot>${esc(initials(n))}</span><b>${esc(n)}</b><span class="tag ${k?.status==='active'?'auto':'void'}">${k?.status==='active'?'Key active':'No key'}</span></div>
+ ${a?`<div class=meter aria-label="Used this month"><i style="width:${pct}%"></i></div><p class=note>${eur(used)} of ${eur(a.monthly_cents)} used this month</p>`:'<p class=note>No limits yet: every request waits for you.</p>'}
+ <div class=grid2><label>Paid automatically up to · EUR<input type=number name=per min=1 step=1 value="${a?a.per_purchase_cents/100:20}"></label><label>Each month · EUR<input type=number name=month min=1 step=1 value="${a?a.monthly_cents/100:100}"></label></div>
+ <div class=cats role=group aria-label="Allowed categories">${CATS.map(c=>`<label><input type=checkbox name=cat value="${c}" ${cats.includes(c)?'checked':''}>${c}</label>`).join('')}</div>
+ <div class=grid2><button>Save limits</button><button type=button class=quiet data-newkey="${esc(n)}">${k?.status==='active'?'Replace key':'Create key'}</button></div>${shownKey&&shownKey.agent===n?`<p class=note>Copy this key into ${esc(n)} now. It is not shown again.</p><div class=key>${esc(shownKey.key)}</div>`:''}<div class=out></div></form>`}).join(''):'<div class="glow empty">No agents yet. Add one below.</div>';
+ document.querySelectorAll('form.perm[data-agent]').forEach(f=>{f.addEventListener('focusin',()=>editing.add(f.dataset.agent));f.addEventListener('focusout',()=>setTimeout(()=>{if(!f.contains(document.activeElement))editing.delete(f.dataset.agent)},0));f.onsubmit=async e=>{e.preventDefault();const cats=[...f.querySelectorAll('[name=cat]:checked')].map(x=>x.value);try{await grant(f.dataset.agent,Math.round(f.per.value*100),Math.round(f.month.value*100),cats.length?cats:null);editing.delete(f.dataset.agent);await load();}catch(x){f.querySelector('.out').innerHTML=`<p class=err>${esc(x.message)}</p>`;}};});
+ document.querySelectorAll('[data-newkey]').forEach(b=>b.onclick=async()=>{try{shownKey=await api('/api/agent-key',{agent:b.dataset.newkey});editing.clear();await load();}catch(e){b.closest('form').querySelector('.out').innerHTML=`<p class=err>${esc(e.message)}</p>`;}});}
+$('#add').onsubmit=async e=>{e.preventDefault();try{shownKey=await api('/api/agent-key',{agent:$('#add-name').value.trim()});$('#add-name').value='';$('#add-out').innerHTML='';await load();}catch(x){$('#add-out').innerHTML=`<p class=err>${esc(x.message)}</p>`;}};
+function tab(id){['req','agents','fun'].forEach(t=>{$('#t-'+t).setAttribute('aria-selected',String(t===id));$('#p-'+t).hidden=t!==id;});}
+['req','agents','fun'].forEach(t=>$('#t-'+t).onclick=()=>tab(t));
+async function load(){try{state=await api('/api/state');$('#gate').hidden=true;$('#app').hidden=false;$('#mode').textContent=state.substitute?'Local substitute':'PayPal Sandbox';paintReq();paintAgents();}catch(e){if(e.status===401){$('#gate').hidden=false;$('#app').hidden=true;}}}
+$('#gate').onsubmit=async e=>{e.preventDefault();try{await api('/api/session',{token:$('#key').value});$('#key').value='';await load();}catch(x){$('#gate-err').textContent=x.message;}};
+load();timer=setInterval(()=>{if(!$('#app').hidden)load();},3000);
+</script></body></html>

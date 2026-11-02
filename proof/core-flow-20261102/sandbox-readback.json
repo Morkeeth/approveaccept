@@ -1,0 +1,39 @@
+{
+  "mode": "PayPal Sandbox provider GET; no write",
+  "request_id": "BUY11034348846f",
+  "local_state": "captured",
+  "order_id": "7BB15044VR121483D",
+  "provider_order_status": "COMPLETED",
+  "authorization_id": "7BF11857LJ215183V",
+  "provider_authorization_status": "CAPTURED",
+  "capture_id": "1GS9141341013832T",
+  "provider_capture_status": "COMPLETED",
+  "order_amount_matches_local": true,
+  "provider_order_description": "Domain name .com, 1 year - sent by Claude Code"
+}
+{
+  "mode": "PayPal Sandbox provider GET; no write",
+  "request_id": "BUY11035002ecbc",
+  "local_state": "captured",
+  "order_id": "9EG14649EU8755818",
+  "provider_order_status": "COMPLETED",
+  "authorization_id": "31612241GJ0632016",
+  "provider_authorization_status": "CAPTURED",
+  "capture_id": "5A205326EY615350C",
+  "provider_capture_status": "COMPLETED",
+  "order_amount_matches_local": true,
+  "provider_order_description": "Hosting plan, Pro, 1 month - sent by Claude Code"
+}
+{
+  "mode": "PayPal Sandbox provider GET; no write",
+  "request_id": "BUY1103558b9ebe",
+  "local_state": "authorized",
+  "order_id": "3K282082741055012",
+  "provider_order_status": "COMPLETED",
+  "authorization_id": "65P826234E422252Y",
+  "provider_authorization_status": "CREATED",
+  "capture_id": null,
+  "provider_capture_status": null,
+  "order_amount_matches_local": true,
+  "provider_order_description": "Flight Paris to Lisbon, economy - sent by GrokBot"
+}

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: approveaccept-sandbox-demo
+    runtime: docker
+    healthCheckPath: /health
+    envVars:
+      - key: APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_ID
+        sync: false
+      - key: APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_SECRET
+        sync: false
+      - key: APPROVEACCEPT_PAYPAL_SANDBOX_MERCHANT_ID
+        sync: false
+      - key: APPROVEACCEPT_GUIDED_DEMO
+        value: "1"
+      - key: APPROVEACCEPT_OWNER_TOKEN
+        sync: false
+      - key: APPROVEACCEPT_AGENT_TOKEN
+        sync: false
+      - key: APPROVEACCEPT_AGENT_NAME
+        value: Build agent
+      - key: APPROVEACCEPT_LIVE_MONEY_ENABLED
+        value: "false"
+      - key: LEASH_V2_WEBHOOK_PORT
+        value: "8757"
+      - key: LEASH_V2_WEBHOOK_ID
+        sync: false

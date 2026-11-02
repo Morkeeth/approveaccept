@@ -1,0 +1,12 @@
+{
+  "mode": "PayPal Sandbox provider GET; no write",
+  "request_id": "BUY105145f7157d",
+  "local_state": "captured",
+  "order_id": "2U392938G4339204F",
+  "provider_order_status": "COMPLETED",
+  "authorization_id": "460949227V540341S",
+  "provider_authorization_status": "CAPTURED",
+  "capture_id": "97X46080DR317715P",
+  "provider_capture_status": "COMPLETED",
+  "order_amount_matches_local": true
+}

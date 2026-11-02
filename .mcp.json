@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "approveaccept": {
+      "command": "sh",
+      "args": [
+        "connect/agent_mcp.sh"
+      ]
+    }
+  }
+}
