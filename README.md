@@ -66,16 +66,18 @@ Passkeys need an HTTPS address. Start the public front service with `./start-hos
 ## What works
 
 - AI agents request any named purchase through four local MCP tools: spending policy, request, status, and wait for decision.
-- Code, not the language model, checks the category, per-merchant automatic limit, and daily automatic limit.
+- Code, not the language model, checks categories and agent allowances (per purchase and per month). The legacy catalog path also applies per-merchant and daily automatic limits.
 - A request outside the automatic limits gets a one-use, expiring phone approval link.
 - A human Approve action captures the PayPal Sandbox authorization from that phone page.
 - A human Refuse action voids the authorization, so no money moves.
+- A paid purchase can be undone: the owner taps Refund twice, and PayPal refunds the whole capture (Payments v2). It happens once, only after a capture, never from an agent or an MCP tool. A pending or uncertain refund stays paid in totals. Tap the row and Check refund later to read the capture status; this never sends a second refund. The allowance is not refilled, the same rule as a void.
 - An allowed request inside both automatic limits can capture without interrupting the owner.
 - An owner can grant or revoke a named agent allowance and see its remaining monthly amount.
 - A purchase outside an allowance goes to the phone instead of silently widening the allowance.
 - Every phone approval requires a WebAuthn assertion with user verification. On iPhone, this is Face ID.
 - The five-minute WebAuthn challenge contains the exact purchase ID, EUR amount, merchant, expiry, and nonce. A different, changed, expired, or replayed purchase stays held.
 - Eight published incident patterns are replayed as hostile purchase requests. All eight are refused before a PayPal order is created.
+- An independent record through PayPal's own MCP server: `python3 connect/paypal_mcp_record.py` reads every order back with `@paypal/mcp` (pinned 1.8.1, `get_order` only, needs node). It checks PayPal's status, amount and the agent's name in the order against the inbox, then prints the totals for each agent. The Sandbox token goes to the MCP server through its environment only.
 
 ## Agent shopping request and owner review
 
@@ -90,15 +92,16 @@ In substitute mode, a real model may exercise the MCP interface while all paymen
 `./journey.sh` is the supported way to start. Running `app.py` directly is for development:
 
 - `LEASH_V2_SUBSTITUTE=1 APPROVEACCEPT_OWNER_TOKEN=<32 or more characters> python3 -B app.py` serves the local stand-in on port 8753.
-- `python3 -B app.py` serves PayPal Sandbox on port 8752. It reads `APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_ID`, `APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_SECRET`, `APPROVEACCEPT_PAYPAL_SANDBOX_MERCHANT_ID` and `APPROVEACCEPT_OWNER_TOKEN` from the environment; `./journey.sh` sets them from step 0.
+- `python3 -B app.py` serves PayPal Sandbox on port 8752. It reads `APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_ID`, `APPROVEACCEPT_PAYPAL_SANDBOX_CLIENT_SECRET`, `APPROVEACCEPT_PAYPAL_SANDBOX_MERCHANT_ID` and `APPROVEACCEPT_OWNER_TOKEN` from the environment; `./journey.sh` loads them from the configuration saved by `connect/byok.py`.
 - `./demo.sh` starts the older guided judge path on port 8879 with the local stand-in.
+- For a demo video without third-party names on screen: start the app with `APPROVEACCEPT_VIDEO_NAMES=1` (the AI label says "an AI model") and run `python3 connect/demo_agents.py --video-names` (agents named "Coding agent" and "Travel agent", also in the PayPal order descriptions).
 
 With the local stand-in and a fixed HTTPS origin, the phone page shows a one-time passkey enrolment link; `signer_service.py` is only a labelled HMAC test double and is not connected to the app. The spend decision is in `spend_rules.py`; the PayPal-shaped state machine is in `leash.py`.
 
 ## Run the checks
 
 ```sh
-python3 -B -m unittest test_agents_core test_stranger_fixes test_catalog_ai test_byok test_shopping_flow test_build test_security_regressions test_spend_rules test_viewport test_hosted_runtime test_loopback_auth test_buyer_return test_safe_refusal_retry test_merchant_grounding
+python3 -B -m unittest discover
 node design/check-tokens.cjs
 node design/check-contrast.cjs
 node design/check-stamps.cjs

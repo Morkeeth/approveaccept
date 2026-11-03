@@ -12,6 +12,9 @@ The key is passed only to the Anthropic client and never logged or returned.
 import json, os
 
 MODEL = os.environ.get('APPROVEACCEPT_MODEL', 'claude-opus-5-5')
+# Demo video only: show "an AI model" instead of the model's name on screen (no third-party trademarks in the video).
+VIDEO_NAMES = os.environ.get('APPROVEACCEPT_VIDEO_NAMES') == '1'
+SHOWN_MODEL = 'an AI model' if VIDEO_NAMES else MODEL
 KEY_ENV = 'APPROVEACCEPT_ANTHROPIC_API_KEY'
 FACT_FIELDS = ('title', 'tags')
 
@@ -48,7 +51,7 @@ def status():
         import anthropic  # noqa: F401
     except ImportError:
         return False, 'The anthropic package is not installed (pip install anthropic).'
-    return True, f'Ranked by {MODEL} with your key.'
+    return True, f'Ranked by {SHOWN_MODEL} with your key.'
 
 
 def prompt(items, persona, mode, intent):
@@ -95,7 +98,7 @@ def validate(items, persona, result):
 
 
 def rank(items, persona, mode, intent, client=None):
-    ok, label = status() if client is None else (True, f'Ranked by {MODEL} with your key.')
+    ok, label = status() if client is None else (True, f'Ranked by {SHOWN_MODEL} with your key.')
     if not ok:
         raise Unavailable(label)
     import anthropic
@@ -125,5 +128,5 @@ def rank(items, persona, mode, intent, client=None):
     except ValueError:
         raise Unavailable('The model did not return valid JSON.') from None
     ranked = validate(items, persona, result)
-    return ranked, {'ai': True, 'model': getattr(response, 'model', MODEL), 'label': label,
+    return ranked, {'ai': True, 'model': SHOWN_MODEL if VIDEO_NAMES else getattr(response, 'model', MODEL), 'label': label,
                     'method': 'AI ranking; every reason quotes your words and this product’s own facts'}

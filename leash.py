@@ -44,10 +44,16 @@ def provision(path, agent, cap, per_purchase, merchants):
         CREATE TABLE requests(id TEXT PRIMARY KEY, agent TEXT NOT NULL, merchant TEXT NOT NULL,
             cents INTEGER NOT NULL, purpose TEXT NOT NULL, month TEXT NOT NULL, state TEXT NOT NULL,
             order_id TEXT UNIQUE, authorization_id TEXT UNIQUE, capture_id TEXT UNIQUE,
-            approval_url TEXT, reason TEXT);
+            approval_url TEXT, reason TEXT, refund_id TEXT UNIQUE);
         ''')
         db.execute('INSERT INTO policy(agent,cap,purchase_cap,merchants) VALUES (?,?,?,?)',
                    (agent, cap, per_purchase, json.dumps(sorted(set(merchants)))))
+
+
+def ensure_refund_column(db):
+    # Stores made before refunds existed gain the column on the first refund.
+    if 'refund_id' not in [r[1] for r in db.execute('PRAGMA table_info(requests)')]:
+        db.execute('ALTER TABLE requests ADD COLUMN refund_id TEXT')
 
 
 class Book:
@@ -110,10 +116,12 @@ class Book:
         return self.get(request_id)
 
     def finish(self, request_id, state, **fields):
-        allowed = {'order_id','authorization_id','capture_id','approval_url'}
+        allowed = {'order_id','authorization_id','capture_id','approval_url','refund_id'}
         if not set(fields) <= allowed:
             raise Refused('Invalid provider fields.')
         with self.db() as db:
+            if 'refund_id' in fields:
+                ensure_refund_column(db)
             db.execute('UPDATE requests SET state=?' + ''.join(', '+k+'=?' for k in fields) + ' WHERE id=?',
                        (state,*fields.values(),request_id))
         return self.get(request_id)
@@ -220,6 +228,25 @@ class Leash:
         self.provider_factory().call('/v2/payments/authorizations/'+row['authorization_id']+'/void',{},request_id+':void')
         # Keep admitted spend charged conservatively. Never refill automatically.
         return self.book.finish(request_id,'voided')
+
+    def refund(self, request_id):
+        # Uncertain refunds are checked by GET only. Never issue a second refund POST.
+        row=self.book.get(request_id)
+        if row['state']=='refunding':
+            capture=self.provider_factory().call('/v2/payments/captures/'+row['capture_id'],method='GET')
+            if capture.get('id')!=row['capture_id'] or not matches_amount(capture.get('amount'),row['cents']):
+                raise Refused('Capture identity or amount mismatch while checking refund.')
+            if capture.get('status')=='REFUNDED':
+                return self.book.finish(request_id,'refunded')
+            return row  # COMPLETED may still have an in-flight refund. Keep it pending.
+        row=self.book.claim(request_id,'captured','refunding')
+        result=self.provider_factory().call('/v2/payments/captures/'+row['capture_id']+'/refund',{},request_id+':refund')
+        if result.get('status') not in ('COMPLETED','PENDING') or not result.get('id'):
+            raise Refused('Refund not confirmed by PayPal. Check the capture in Sandbox before trying again.')
+        if result.get('amount') and not matches_amount(result['amount'],row['cents']):
+            raise Refused('Refund amount differs from the capture. Check the capture in Sandbox.')
+        # Same rule as a void: the allowance is not refilled automatically.
+        return self.book.finish(request_id,'refunded' if result['status']=='COMPLETED' else 'refunding',refund_id=result['id'])
 
 
 def main():

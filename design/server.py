@@ -30,8 +30,10 @@ if OWNER_TOKEN and AGENT_TOKEN and secrets.compare_digest(OWNER_TOKEN.encode(), 
 SESSIONS = {}
 SESSION_LOCK = threading.Lock()
 LOGIN_ATTEMPTS = {}
+# The pages the README and the demo video use. Their API calls are all in WRITES or the GET routes below.
+PAGES = {'/inbox': 'inbox.html', '/journey': 'journey.html'}
 CAPABILITY_WRITES = {'/api/phone-decision', '/api/passkey/enrol', '/api/suggestion'}
-WRITES = {'/api/decide', '/api/attacks', '/api/purchase', '/api/phone-decision',
+WRITES = {'/api/decide', '/api/refund', '/api/attacks', '/api/purchase', '/api/phone-decision',
           '/api/passkey/enrol', '/api/suggestion', '/api/subscription-cancel',
           '/api/allowance', '/api/allowance-revoke', '/api/approval-link',
           '/api/demo/start', '/api/shopping/setup', '/api/ideas', '/api/ideas/choose',
@@ -215,6 +217,8 @@ class H(BaseHTTPRequestHandler):
                 return self.send(502, 'Sandbox return verification unavailable. Ask the owner to check the existing purchase.', 'text/plain')
         if self.path in ('/', '/index.html'):
             return self.send(200, (HERE.parent / 'index.html').read_bytes(), 'text/html; charset=utf-8')
+        if urlsplit(self.path).path in PAGES:
+            return self.send(200, (HERE.parent / PAGES[urlsplit(self.path).path]).read_bytes(), 'text/html; charset=utf-8')
         if self.path.startswith('/approve?') or self.path == '/approve':
             return self.send(200, (HERE.parent / 'phone.html').read_bytes(), 'text/html; charset=utf-8')
         self.send(404, 'not found', 'text/plain')

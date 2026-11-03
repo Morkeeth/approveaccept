@@ -2,6 +2,7 @@
 """Demo: two named agents buy through the real MCP server, each with its own key.
 
     python3 connect/demo_agents.py      (with ./journey.sh or ./journey.sh --no-paypal running)
+    python3 connect/demo_agents.py --video-names   generic agent names, for the demo video
 
 The owner key is read from ~/.config/approveaccept (or APPROVEACCEPT_OWNER_TOKEN if set).
 
@@ -26,8 +27,9 @@ def owner_key():
             candidates += [l.split("'")[1] for l in f.read_text().splitlines() if l.startswith("export APPROVEACCEPT_OWNER_TOKEN='")]
     for key in filter(None, candidates):
         try:
-            urllib.request.urlopen(urllib.request.Request(URL + '/api/state', headers={'Authorization': 'Bearer ' + key}), timeout=10)
-            return key
+            with urllib.request.urlopen(urllib.request.Request(URL + '/api/state', headers={'Authorization': 'Bearer ' + key}), timeout=10) as response:
+                if json.load(response).get('access') == 'owner':
+                    return key
         except Exception:
             continue
     return ''
@@ -61,7 +63,21 @@ def mcp(key, calls):
     return [r for r in replies if r.get('id', 0) > 0]
 
 
+# For the demo video only: the hackathon rules ban third-party trademarks in the video,
+# so --video-names runs the same demo with generic agent names. The names flow into the
+# keys, the inbox and the PayPal order descriptions. The app itself accepts any name.
+VIDEO_NAMES = {'Claude Code': 'Coding agent', 'GrokBot': 'Travel agent'}
+
+
+def use_video_names():
+    global AGENTS, ASKS
+    AGENTS = {VIDEO_NAMES.get(n, n): v for n, v in AGENTS.items()}
+    ASKS = [(VIDEO_NAMES.get(a[0], a[0]),) + tuple(a[1:]) for a in ASKS]
+
+
 def main():
+    if '--video-names' in sys.argv[1:]:
+        use_video_names()
     if len(OWNER) < 32:
         raise SystemExit('No owner key found. Start the app first: ./journey.sh --no-paypal, or step 0 then ./journey.sh')
     keys = {}

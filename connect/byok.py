@@ -137,8 +137,8 @@ def main():
     print(f'Saved to {path} (mode 600, outside the repository).')
     print(f'Payments go to your own Sandbox business account {merchant}.')
     print(f'Connect your agent: point an MCP client at mcp_server.py with AA_URL set and the agent key from that file, agent name "{AGENT_NAME}".')
-    tty(f'\nOwner sign-in key (shown once, not saved in any log):\n{owner}\n\n')
-    print('Next: ./journey.sh, then open the printed /journey link and sign in with the owner key.')
+    tty(f'\nOwner sign-in key (shown here and saved in your private sandbox.env):\n{owner}\n\n')
+    print('Next: ./journey.sh, then open the printed /inbox link and sign in with the owner key.')
 
 
 if __name__ == '__main__':

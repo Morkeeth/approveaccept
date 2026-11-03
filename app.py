@@ -114,6 +114,9 @@ class Substitute:
             return {'id': 'SUB-CAPTURE-' + secrets.token_hex(4).upper(), 'status': 'COMPLETED', 'amount': self.auths[aid]}
         if path.endswith('/void'):
             return {}
+        m = re.match(r'/v2/payments/captures/([^/]+)/refund$', path)
+        if m:
+            return {'id': 'SUB-REFUND-' + secrets.token_hex(4).upper(), 'status': 'COMPLETED'}
         raise Refused('Substitute has no route for ' + path)
 
     def approve(self, order_id):
@@ -434,6 +437,21 @@ def decide(pid, accept):
         S.note('Human', 'refused', 'Refused. Authorization voided in PayPal; no money moved.', pid, {'authorization_id': row['authorization_id']})
     with S.db() as db:
         db.execute('UPDATE proposals SET outcome=? WHERE id=?', ('accepted' if accept else 'refused-by-human', pid))
+    return row
+
+
+def refund(pid):
+    """Owner undo of a paid purchase: PayPal refunds the whole capture. The allowance is not refilled."""
+    try:
+        S.book.get(str(pid))
+    except Refused:
+        raise Refused('Unknown request.') from None
+    row = S.leash.refund(str(pid))
+    if row['state'] == 'refunded':
+        S.note('Human', 'refunded', f'Refunded {eur(row["cents"])}. PayPal confirmed the refund; the allowance was not refilled.',
+               str(pid), {'refund_id': row.get('refund_id')})
+    else:
+        S.note('Human', 'refund-pending', 'PayPal has not confirmed a completed refund. Tap Check refund later; no second refund is sent.', str(pid))
     return row
 
 
@@ -899,7 +917,7 @@ def agent_status(pid):
         m = {}
     state = m.get('state') or ('blocked' if p['outcome'] == 'blocked' else 'refused')
     return {'id': pid, 'agent': p['agent'], 'title': p['title'], 'amount': eur(p['cents']), 'state': state,
-            'decided': state in ('captured', 'voided', 'refused', 'blocked'),
+            'decided': state in ('captured', 'refunding', 'refunded', 'voided', 'refused', 'blocked'),
             'merchant': p['link'], 'category': p['sku'], 'why': p['why'], 'task': p['task'],
             'context': saved_request_context(pid),
             'order_id': m.get('order_id'), 'authorization_id': m.get('authorization_id'), 'capture_id': m.get('capture_id'),
@@ -1025,6 +1043,38 @@ def attacks():
     return out
 
 
+MONTH_KEYS = {'captured': 'paid_cents', 'authorized': 'held_cents', 'refunded': 'refunded_cents',
+              'refunding': 'paid_cents', 'voided': 'released_cents'}
+
+
+def month_view(reqs):
+    """Every agent's payments this month, from the same rows the PayPal MCP record checks."""
+    month = datetime.now(timezone.utc).strftime('%Y-%m')
+    out = {}
+    for r in reqs:
+        key = MONTH_KEYS.get(r['state'])
+        if not key or r.get('month') != month:
+            continue
+        a = out.setdefault(r['agent'], {'paid_cents': 0, 'held_cents': 0, 'refunded_cents': 0, 'released_cents': 0, 'count': 0})
+        a[key] += r['cents']
+        a['count'] += 1
+    for name, a in out.items():
+        allowance = allowance_for(name)
+        a['left_cents'] = allowance['remaining_cents'] if allowance else None
+    return out
+
+
+def last_paypal_check(reqs):
+    """The last PayPal MCP record, and whether every payment it checked is still in the state it checked."""
+    try:
+        saved = json.loads((S.book.path.parent / 'paypal-record.json').read_text())
+    except (OSError, ValueError):
+        return None
+    now = {r['id']: r['state'] for r in reqs if r.get('order_id')}
+    return {'at': saved.get('at'), 'matched': saved.get('matched'), 'total': saved.get('total'),
+            'source': saved.get('source'), 'current': saved.get('states') == now}
+
+
 def snapshot():
     with S.db() as db:
         props = [dict(r) for r in db.execute('SELECT * FROM proposals ORDER BY at DESC')]
@@ -1041,6 +1091,8 @@ def snapshot():
         p['checks'] = json.loads(p['checks'])
         p['paypal_events'] = [e for e in evs if e['pid'] == p['id']]
     spent = sum(r['cents'] for r in reqs.values() if r['state'] == 'captured')
+    month_by_agent = month_view(reqs.values())
+    paypal_check = last_paypal_check(reqs.values())
     held = sum(r['cents'] for r in reqs.values() if r['state'] == 'authorized')
     agents = [dict(a, used=pol.get(a['name'], {}).get('used', 0)) for a in AGENTS]
     generic = [p for p in props if p['id'].startswith('BUY')]
@@ -1048,7 +1100,7 @@ def snapshot():
     return dict(substitute=SUBSTITUTE, guided_demo=GUIDED_DEMO,
                 persona=S.kv('persona'), events=S.kv('events'), wish=S.kv('wish'), catalog=CATALOG,
                 agents=agents, proposals=props, generic_requests=generic, spend_rules=spend_rule_rows(),
-                request_overview=overview,
+                request_overview=overview, month_by_agent=month_by_agent, paypal_check=paypal_check,
                 subscriptions=subscriptions, allowances=[allowance_for(name) for name in allowance_names],
                 public_base=PUBLIC_BASE, spent=spent, held=held, agent_keys=agent_keys(),
                 threshold=DEVICE_THRESHOLD, signer_mode='Face ID passkey',
@@ -1311,6 +1363,8 @@ class H(BaseHTTPRequestHandler):
             return fund(b['id'])
         if p == '/api/decide':
             return decide(b['id'], bool(b.get('accept')))
+        if p == '/api/refund':
+            return refund(b.get('id', ''))
         if p == '/api/readback':
             return readback()
         if p == '/api/agent/request':

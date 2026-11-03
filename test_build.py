@@ -706,6 +706,195 @@ class TestContrast(unittest.TestCase):
         self.assertIn('--mute on --ground', r.stdout)
 
 
+class TestRefund(unittest.TestCase):
+    """Undo a paid purchase: the owner refunds the PayPal capture; the agent cannot."""
+
+    def setUp(self):
+        self.m = MCP()
+
+    def tearDown(self):
+        self.m.close()
+
+    def captured(self):
+        r = self.m.tool('request_purchase', agent='Concierge', sku='cine2', link='E1', why='Film night.', task='book date night')
+        token = app.approval_link(r['id']).split('token=')[1]
+        app.phone_decide(token, 'approve', approval_assertion(token))
+        self.assertEqual(app.S.book.get(r['id'])['state'], 'captured')
+        return r['id']
+
+    def test_owner_refunds_a_captured_purchase(self):
+        pid = self.captured()
+        code, body = post(BASE + '/api/refund', {'id': pid})
+        self.assertEqual(code, 200, body)
+        row = app.S.book.get(pid)
+        self.assertEqual(row['state'], 'refunded')
+        self.assertTrue(row['refund_id'].startswith('SUB-REFUND-'), row)
+        self.assertEqual(body['refund_id'], row['refund_id'])
+        self.assertEqual(self.m.tool('purchase_status', id=pid)['state'], 'refunded')
+        feed = [e for e in app.snapshot()['feed'] if e.get('request_id') == pid]
+        self.assertTrue(any(e['kind'] == 'refunded' for e in feed), feed)
+
+    def test_a_refund_happens_once(self):
+        pid = self.captured()
+        self.assertEqual(post(BASE + '/api/refund', {'id': pid})[0], 200)
+        first = app.S.book.get(pid)['refund_id']
+        self.assertEqual(post(BASE + '/api/refund', {'id': pid})[0], 409)
+        self.assertEqual(app.S.book.get(pid)['refund_id'], first)
+
+    def test_only_a_captured_purchase_can_be_refunded(self):
+        r = self.m.tool('request_purchase', agent='Concierge', sku='cine2', link='E1', why='Film.')
+        self.assertEqual(post(BASE + '/api/refund', {'id': r['id']})[0], 409)
+        self.assertEqual(app.S.book.get(r['id'])['state'], 'authorized')
+
+    def test_refund_needs_the_owner(self):
+        pid = self.captured()
+        req = urllib.request.Request(BASE + '/api/refund', json.dumps({'id': pid}).encode(),
+                                     {'Content-Type': 'application/json', 'Origin': BASE})
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(req, timeout=10)
+        self.assertIn(caught.exception.code, (401, 403))
+        self.assertEqual(app.S.book.get(pid)['state'], 'captured')
+
+    def test_no_mcp_tool_can_refund(self):
+        names = [t['name'] for t in self.m.rpc('tools/list')['tools']]
+        self.assertFalse([n for n in names if 'refund' in n])
+
+    def test_refund_does_not_refill_the_allowance(self):
+        # Same rule as a void: admitted spend stays charged; refilling is an explicit owner action.
+        before = app.allowance_for('Concierge')
+        pid = self.captured()
+        mid = app.allowance_for('Concierge')
+        post(BASE + '/api/refund', {'id': pid})
+        after = app.allowance_for('Concierge')
+        if before:
+            self.assertEqual(after['remaining_cents'], mid['remaining_cents'])
+
+    def test_paypal_refund_call_is_idempotent_and_checked(self):
+        import leash
+        calls = []
+
+        class Fake:
+            def __init__(self, status='COMPLETED'):
+                self.status = status
+
+            def call(self, path, data=None, request_id=None, method='POST'):
+                calls.append((path, data, request_id))
+                return {'id': 'REFUND123', 'status': self.status, 'amount': {'currency_code': 'EUR', 'value': '26.00'}}
+
+        pid = self.captured()
+        row = app.S.book.get(pid)
+        done = leash.Leash(app.S.book, lambda: Fake()).refund(pid)
+        self.assertEqual(calls[-1][0], '/v2/payments/captures/' + row['capture_id'] + '/refund')
+        self.assertEqual(calls[-1][2], pid + ':refund')
+        self.assertEqual((done['state'], done['refund_id']), ('refunded', 'REFUND123'))
+        pid2 = self.captured()
+        with self.assertRaises(leash.Refused):
+            leash.Leash(app.S.book, lambda: Fake('FAILED')).refund(pid2)
+        # Uncertain outcome is kept, so a retry cannot refund twice.
+        self.assertEqual(app.S.book.get(pid2)['state'], 'refunding')
+
+    def test_pending_refund_is_checked_without_another_post(self):
+        import leash
+        calls = []
+        class PendingProvider:
+            capture_status = 'COMPLETED'
+            def call(self, path, data=None, request_id=None, method='POST'):
+                calls.append((path, method))
+                return {'id': 'REFUND-PENDING' if method == 'POST' else capture_id,
+                        'status': 'PENDING' if method == 'POST' else self.capture_status,
+                        'amount': {'currency_code': 'EUR', 'value': '26.00'}}
+        pid = self.captured()
+        capture_id = app.S.book.get(pid)['capture_id']
+        provider = PendingProvider()
+        service = leash.Leash(app.S.book, lambda: provider)
+        self.assertEqual(service.refund(pid)['state'], 'refunding')
+        self.assertEqual(service.refund(pid)['state'], 'refunding')
+        provider.capture_status = 'REFUNDED'
+        self.assertEqual(service.refund(pid)['state'], 'refunded')
+        self.assertEqual(sum(method == 'POST' for _, method in calls), 1)
+        self.assertEqual(sum(method == 'GET' for _, method in calls), 2)
+        self.assertTrue(app.agent_status(pid)['decided'])
+
+    def test_inbox_offers_refund_with_a_second_tap_and_the_front_allows_it(self):
+        inbox = (APP_DIR / 'inbox.html').read_text()
+        self.assertIn('data-refund', inbox)
+        self.assertIn('Tap again to refund', inbox)
+        self.assertIn("'/api/refund'", (APP_DIR / 'design' / 'server.py').read_text())
+
+
+
+class TestMonthView(unittest.TestCase):
+    """One place for every agent's payments this month, and whether PayPal's MCP agreed with it."""
+
+    def setUp(self):
+        self.m = MCP()
+
+    def tearDown(self):
+        self.m.close()
+
+    def held(self):
+        return self.m.tool('request_purchase', agent='Concierge', sku='cine2', link='E1', why='Film.', task='date night')['id']
+
+    def paid(self):
+        pid = self.held()
+        token = app.approval_link(pid).split('token=')[1]
+        app.phone_decide(token, 'approve', approval_assertion(token))
+        return pid
+
+    def month(self):
+        zero = {'paid_cents': 0, 'held_cents': 0, 'refunded_cents': 0, 'released_cents': 0, 'count': 0}
+        return dict(zero, **(app.snapshot()['month_by_agent'].get('Concierge') or {}))
+
+    def test_month_totals_per_agent_follow_every_state(self):
+        before = self.month()
+        paid, refunded, held, released = self.paid(), self.paid(), self.held(), self.held()
+        post(BASE + '/api/refund', {'id': refunded})
+        post(BASE + '/api/decide', {'id': released, 'accept': False})
+        after = self.month()
+        cents = app.S.book.get(paid)['cents']
+        self.assertEqual(after['paid_cents'] - before['paid_cents'], cents)
+        self.assertEqual(after['refunded_cents'] - before['refunded_cents'], cents)
+        self.assertEqual(after['held_cents'] - before['held_cents'], cents)
+        self.assertEqual(after['released_cents'] - before['released_cents'], cents)
+        self.assertEqual(after['count'] - before['count'], 4)
+
+    def test_pending_refund_does_not_claim_money_has_returned(self):
+        row = dict(agent='Concierge', month=app.datetime.now(app.timezone.utc).strftime('%Y-%m'),
+                   cents=4400, state='refunding')
+        pending = app.month_view([row])['Concierge']
+        self.assertEqual(pending['paid_cents'], 4400)
+        self.assertEqual(pending['refunded_cents'], 0)
+        row['state'] = 'refunded'
+        complete = app.month_view([row])['Concierge']
+        self.assertEqual(complete['paid_cents'], 0)
+        self.assertEqual(complete['refunded_cents'], 4400)
+
+    def test_paypal_check_is_shown_only_while_nothing_changed(self):
+        sys.path.insert(0, str(APP_DIR / 'connect'))
+        import paypal_mcp_record as rec
+        pid = self.paid()
+        rows = rec.load_rows(app.S.book.path.parent)
+        results = [{'request': r['id'], 'agent': r['agent'], 'eur': r['cents'] / 100, 'local_state': r['state'],
+                    'order_id': r['order_id'], 'match': True, 'why': 'PayPal says COMPLETED'} for r in rows]
+        rec.save_check(app.S.book.path.parent, results)
+        check = app.snapshot()['paypal_check']
+        self.assertEqual((check['matched'], check['total'], check['current']), (len(rows), len(rows), True))
+        post(BASE + '/api/refund', {'id': pid})
+        self.assertFalse(app.snapshot()['paypal_check']['current'])
+
+    def test_no_check_yet_says_so(self):
+        f = app.S.book.path.parent / 'paypal-record.json'
+        if f.exists():
+            f.unlink()
+        self.assertIsNone(app.snapshot()['paypal_check'])
+
+    def test_inbox_shows_the_month_view_and_the_check(self):
+        inbox = (APP_DIR / 'inbox.html').read_text()
+        self.assertIn('id=month', inbox)
+        self.assertIn('Checked with PayPal', inbox)
+        self.assertIn('changed since', inbox)
+
+
 if __name__ == '__main__':
     unittest.main()
 
