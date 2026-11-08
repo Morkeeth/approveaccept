@@ -10,9 +10,9 @@ There are two modes. The no-PayPal mode is the one anyone can click in two minut
 
 | | No-PayPal mode (`./journey.sh --no-paypal`) | PayPal Sandbox mode (`./journey.sh`) |
 |---|---|---|
-| Reads | Your owner key file. Nothing else of yours. | Your Sandbox keys file. An Anthropic key if you saved one. |
+| Reads | Your owner key file. The `APPROVEACCEPT_ANTHROPIC_API_KEY` variable, if your shell sets it. The Keychain items described below the table. | Your Sandbox keys file. An Anthropic key if you saved one. |
 | Writes | `~/.config/approveaccept/no-paypal.env` (your owner key, mode 600) and `~/.config/approveaccept/data-no-paypal/` (`state.db`, `spend.db`). Nothing inside the repository. | `~/.config/approveaccept/sandbox.env` (keys, mode 600, written by `connect/byok.py`) and `~/.config/approveaccept/data/`. |
-| Leaves your machine | No payment call. Every payment ID starts with `SUB` (`app.py`, `SUBSTITUTE`). The shop search on Surprise me is switched off in this mode (`shopping.py`). The server listens on `127.0.0.1:8780` only (`app.py`, last line). | Calls to `api-m.sandbox.paypal.com` (`leash.py`, `connect/byok.py`). With a saved Anthropic key and the `anthropic` package, Surprise me sends product titles, tags, prices and your stated preferences to Anthropic (`catalog_ai.py`). There is no live PayPal address anywhere in the code. |
+| Leaves your machine | No payment call. Every payment ID starts with `SUB` (`app.py`, `SUBSTITUTE`). The shop search on Surprise me is switched off in this mode (`shopping.py`). The server listens on `127.0.0.1:8780` only (`app.py`, last line). Anthropic is called only if that variable is set and the `anthropic` package is installed (`catalog_ai.py`). | Calls to `api-m.sandbox.paypal.com` (`leash.py`, `connect/byok.py`). With a saved Anthropic key and the `anthropic` package, Surprise me sends product titles, tags, prices and your stated preferences to Anthropic (`catalog_ai.py`). There is no live PayPal address anywhere in the code. |
 
 One more outbound path exists in both modes, and it is off by default. If a Telegram test bot token and chat ID are stored in the macOS Keychain under the account `leash-sandbox`, the app sends held requests to `api.telegram.org` (`telegram_approve.py`). The server then prints `Telegram approvals on`. If you do not see that line, it is off.
 
@@ -67,14 +67,14 @@ AA_URL=http://127.0.0.1:8780 APPROVEACCEPT_AGENT_TOKEN=<the agent key> python3 -
 
 It offers four tools: `spending_policy`, `request_purchase`, `purchase_status`, `wait_for_decision`. Use this command, not the `.mcp.json` in the repository: that file starts `connect/agent_mcp.sh`, which needs a prepared run file and otherwise stops with `AA_AGENT_ENV_FILE: Set AA_AGENT_ENV_FILE to the fresh run agent-env.sh`.
 
-**Undo everything:**
+**Undo the no-PayPal demo:**
 
 ```
 lsof -ti tcp:8780 -sTCP:LISTEN | xargs kill
-rm -rf ~/.config/approveaccept
+rm -rf ~/.config/approveaccept/no-paypal.env ~/.config/approveaccept/data-no-paypal
 ```
 
-Then delete the cloned folder.
+Then delete the cloned folder. If you also ran Path B, `~/.config/approveaccept/sandbox.env` holds your Sandbox keys and `~/.config/approveaccept/data/` its records; remove them only when you mean to.
 
 ## Do it yourself instead
 

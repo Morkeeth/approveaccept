@@ -10,6 +10,8 @@ Claude Code, GrokBot or any agent you name gets its own key. It sends a purchase
 
 ## Try it: pick one path
 
+New here? `docs/ONBOARDING.md` says what runs, what is written and what needs a PayPal Sandbox account or an iPhone. To let Claude Code set it up for you: `cp -r skill/approveaccept ~/.claude/skills/`.
+
 You need Python 3.11 or newer and git. Both paths use the same address and pages:
 
 - `http://127.0.0.1:8780/inbox`: your agents' requests. **Start here.**

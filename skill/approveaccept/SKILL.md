@@ -45,9 +45,9 @@ You set up the no-PayPal demo for the person, let two demo agents buy, and show 
 7. **Stop and undo when asked.**
    ```
    lsof -ti tcp:8780 -sTCP:LISTEN | xargs kill
-   rm -rf ~/.config/approveaccept
+   rm -rf ~/.config/approveaccept/no-paypal.env ~/.config/approveaccept/data-no-paypal
    ```
-   Done when the `lsof` line from step 1 prints nothing again. Remove the cloned folder only if they ask.
+   Done when the `lsof` line from step 1 prints nothing again. Leave `sandbox.env` and `data/` in that folder alone: they belong to a PayPal Sandbox setup. Remove the cloned folder only if they ask.
 
 ## Reference
 
