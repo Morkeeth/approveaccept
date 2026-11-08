@@ -5,7 +5,8 @@ captures, voids or approves: only the human, on the dashboard or in Telegram, ca
 The agent names an item and says why. ApproveAccept sets payee and amount, runs every check, and
 holds the money in a PayPal sandbox authorization.
 
-Claude Code: .mcp.json in this folder with the fresh run's AA_AGENT_ENV_FILE.
+Claude Code: .mcp.json in this folder. It uses the local demo on port 8780 and APPROVEACCEPT_AGENT_TOKEN,
+or a prepared sandbox run when AA_AGENT_ENV_FILE is set.
 Codex or Claude: see README.md, "Connect your agent".
 AA_URL points at the public service for remote agent access (the old local default
 http://127.0.0.1:8752 is for trusted single-machine development only).
@@ -50,8 +51,10 @@ TOOLS = [
 def http(method, path, body=None):
     headers = {'Content-Type': 'application/json', 'Origin': URL}
     token = os.environ.get('APPROVEACCEPT_AGENT_TOKEN', '')
-    if token:
-        headers['Authorization'] = 'Bearer ' + token
+    if not token:
+        return {'error': 'No agent key. Add an agent on the Agents tab of /inbox, copy its key, '
+                         'and set APPROVEACCEPT_AGENT_TOKEN before starting this server.'}
+    headers['Authorization'] = 'Bearer ' + token
     req = urllib.request.Request(URL + path, json.dumps(body).encode() if body is not None else None,
                                  headers, method=method)
     try:

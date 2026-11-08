@@ -51,6 +51,6 @@ You set up the no-PayPal demo for the person, let two demo agents buy, and show 
 
 ## Reference
 
-- To connect their own agent: Agents tab, add a name, copy the key once, then run `AA_URL=http://127.0.0.1:8780 APPROVEACCEPT_AGENT_TOKEN=<key> python3 -B mcp_server.py` as an MCP server. Do not use the repository's `.mcp.json`; it needs a prepared run file.
+- To connect their own agent: Agents tab, add a name, copy the key once, then run `AA_URL=http://127.0.0.1:8780 APPROVEACCEPT_AGENT_TOKEN=<key> python3 -B mcp_server.py` as an MCP server. In Claude Code, the repository's `.mcp.json` does the same when `APPROVEACCEPT_AGENT_TOKEN` is set; without a key, each tool says where to get one.
 - Rules are code, not a model. The agent's item, merchant and price are not verified; the payee is set by the server.
 - Full page: `docs/ONBOARDING.md`.

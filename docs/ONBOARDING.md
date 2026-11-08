@@ -65,7 +65,7 @@ Then click:
 AA_URL=http://127.0.0.1:8780 APPROVEACCEPT_AGENT_TOKEN=<the agent key> python3 -B mcp_server.py
 ```
 
-It offers four tools: `spending_policy`, `request_purchase`, `purchase_status`, `wait_for_decision`. Use this command, not the `.mcp.json` in the repository: that file starts `connect/agent_mcp.sh`, which needs a prepared run file and otherwise stops with `AA_AGENT_ENV_FILE: Set AA_AGENT_ENV_FILE to the fresh run agent-env.sh`.
+It offers four tools: `spending_policy`, `request_purchase`, `purchase_status`, `wait_for_decision`. In Claude Code, the repository's `.mcp.json` does the same: start Claude Code from this folder with `APPROVEACCEPT_AGENT_TOKEN` set, and it connects to the demo on port 8780. Without a key it still starts, and each tool answers with where to get one.
 
 **Undo the no-PayPal demo:**
 
