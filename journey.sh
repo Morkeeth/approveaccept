@@ -1,6 +1,6 @@
 #!/bin/sh
 # Start ApproveAccept on http://127.0.0.1:8780.
-#   ./journey.sh              PayPal Sandbox with the keys saved by step 0 (python3 connect/byok.py); keys are never printed.
+#   ./journey.sh              PayPal Sandbox with the keys saved by python3 connect/byok.py (README, Path B); keys are never printed.
 #   ./journey.sh --no-paypal  no account needed: a labelled local stand-in for PayPal.
 set -eu
 AA_HOME="${APPROVEACCEPT_HOME:-$HOME/.config/approveaccept}"
@@ -25,7 +25,7 @@ if [ "${1:-}" = "--no-paypal" ]; then
 fi
 ENV_FILE="$AA_HOME/sandbox.env"
 if [ ! -f "$ENV_FILE" ]; then
-  echo "No PayPal keys yet. Either run step 0 (python3 connect/byok.py), or try it without PayPal: ./journey.sh --no-paypal" >&2
+  echo "No PayPal keys yet. Either run python3 connect/byok.py (README, Path B), or try it without PayPal: ./journey.sh --no-paypal" >&2
   exit 1
 fi
 # shellcheck disable=SC1090
@@ -38,5 +38,5 @@ export LEASH_V2_PORT="$AA_PORT"
 export LEASH_V2_DATA="${AA_DATA_DIR:-$AA_HOME/data}"
 mkdir -p "$LEASH_V2_DATA"
 echo "ApproveAccept, PayPal Sandbox with your own keys: http://127.0.0.1:$AA_PORT/inbox"
-echo "Sign in with the owner key from step 0. Stop with Ctrl-C."
+echo "Sign in with the owner key that connect/byok.py printed. Stop with Ctrl-C."
 exec python3 -B app.py

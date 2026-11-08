@@ -1437,7 +1437,7 @@ def main():
     global S
     loopback_auth.AGENT_KEYS = agent_for_key
     if not SUBSTITUTE and not SHOP:
-        raise SystemExit('No PayPal Sandbox merchant ID. Run step 0 first: python3 connect/byok.py, then ./journey.sh')
+        raise SystemExit('No PayPal Sandbox merchant ID. Run python3 connect/byok.py first (README, Path B), then ./journey.sh')
     S = State()
     print(f'ApproveAccept (leash-v2) on http://127.0.0.1:{PORT}  PayPal: {"SUBSTITUTE, no network" if SUBSTITUTE else "sandbox"}', flush=True)
     if os.environ.get('LEASH_V2_WEBHOOK_PORT'):

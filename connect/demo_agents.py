@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 URL = os.environ.get('AA_URL', 'http://127.0.0.1:8780').rstrip('/')
 def owner_key():
-    """The owner key of the app that is running at AA_URL: env first, then the step 0 files."""
+    """The owner key of the app that is running at AA_URL: env first, then the files saved by journey.sh or connect/byok.py."""
     candidates = [os.environ.get('APPROVEACCEPT_OWNER_TOKEN', '')]
     home = Path(os.environ.get('APPROVEACCEPT_HOME') or Path.home() / '.config' / 'approveaccept')
     for name in ('sandbox.env', 'no-paypal.env'):
@@ -79,7 +79,7 @@ def main():
     if '--video-names' in sys.argv[1:]:
         use_video_names()
     if len(OWNER) < 32:
-        raise SystemExit('No owner key found. Start the app first: ./journey.sh --no-paypal, or step 0 then ./journey.sh')
+        raise SystemExit('No owner key found. Start the app first: ./journey.sh --no-paypal, or python3 connect/byok.py then ./journey.sh')
     keys = {}
     for name, p in AGENTS.items():
         keys[name] = owner('/api/agent-key', {'agent': name})['key']

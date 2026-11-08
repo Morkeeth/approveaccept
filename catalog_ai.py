@@ -46,7 +46,7 @@ def key():
 
 def status():
     if not key():
-        return False, 'No model key. Add one in step 0 (python3 connect/byok.py).'
+        return False, 'No model key. Add one with python3 connect/byok.py (README, Path B).'
     try:
         import anthropic  # noqa: F401
     except ImportError:
