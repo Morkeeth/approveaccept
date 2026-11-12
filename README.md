@@ -154,3 +154,12 @@ MIT. See `LICENSE`.
 Loopback does not grant owner access. Set `APPROVEACCEPT_OWNER_TOKEN` (at least 32 characters) for owner sign-in; the dashboard uses an expiring HttpOnly session. Configure a different `APPROVEACCEPT_AGENT_TOKEN` and `APPROVEACCEPT_AGENT_NAME` for a connector: it can request purchases and read only its own policy/status. Missing configuration fails closed, including in substitute mode. Private API reads require authentication. Every API POST requires an explicit `Origin` matching the configured public base URL or the internal localhost/127.0.0.1 port; absent and `null` origins are refused, even with a bearer token. The MCP client supplies its configured API URL as Origin. The public proxy checks the caller before forwarding the appropriate role and internal Origin. Phone capability routes retain purchase-bound token/passkey validation. Provider webhooks remain on their separate signature-verifying listener. Never put access tokens in source or URLs.
 
 Purchase intent keys remain bound to the original details. A confirmed spending-rule refusal before provider effects may be retried with the same key after an owner policy change; it is re-evaluated under current rules. Unknown provider outcomes and pre-existing pending claims remain closed to replacement payments. Completed purchases return their original result. Historical keys are not cleared or guessed safe.
+
+## Find real products with Channel3
+
+Before an agent asks to buy, it can search real retailer offers. The MCP tool `find_products` calls
+[Channel3](https://trychannel3.com) product search and returns title, brand, merchant, price and
+availability. It is discovery only: it never pays and never sets a payee. The agent then calls
+`request_purchase` with the item it found, and the human approves as usual while PayPal holds the money.
+
+Set `CHANNEL3_API_KEY`, then try it from the shell: `python3 channel3_search.py travel adapter`.

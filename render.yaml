@@ -24,3 +24,5 @@ services:
         value: "8757"
       - key: LEASH_V2_WEBHOOK_ID
         sync: false
+      - key: CHANNEL3_API_KEY
+        sync: false

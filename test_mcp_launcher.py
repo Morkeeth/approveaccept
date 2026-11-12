@@ -26,7 +26,7 @@ class Launcher(unittest.TestCase):
     def test_newcomer_gets_tools_and_a_plain_key_message(self):
         replies, err, _ = session(dict(CLEAN), [('tools/list', {}),
                                                 ('tools/call', {'name': 'spending_policy', 'arguments': {'agent': 'x'}})])
-        self.assertEqual(len(replies[1]['result']['tools']), 4)
+        self.assertEqual(len(replies[1]['result']['tools']), 5)
         self.assertIn('No agent key', text(replies[2])['error'])
         self.assertIn('Agents tab', err)
 

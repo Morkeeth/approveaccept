@@ -1,6 +1,6 @@
 """ApproveAccept MCP server (stdio). An agent in Claude Code or Codex asks to buy; a human decides.
 
-Tools: request_purchase, purchase_status, wait_for_decision. There is deliberately no tool that
+Tools: find_products (Channel3 search, discovery only), request_purchase, purchase_status, wait_for_decision. There is deliberately no tool that
 captures, voids or approves: only the human, on the dashboard or in Telegram, can move the money.
 The agent names an item and says why. ApproveAccept sets payee and amount, runs every check, and
 holds the money in a PayPal sandbox authorization.
@@ -12,11 +12,18 @@ AA_URL points at the public service for remote agent access (the old local defau
 http://127.0.0.1:8752 is for trusted single-machine development only).
 """
 import json, os, sys, time, urllib.error, urllib.parse, urllib.request
+import channel3_search
 
 URL = os.environ.get('AA_URL', 'http://127.0.0.1:8752').rstrip('/')
 CLIENT = os.environ.get('AA_CLIENT', 'an MCP client')
 
 TOOLS = [
+    {'name': 'find_products',
+     'description': 'Search real retailer offers with Channel3 before asking to buy. Discovery only: it never pays.',
+     'inputSchema': {'type': 'object', 'properties': {
+         'query': {'type': 'string', 'description': 'What to look for.'},
+         'max_price': {'type': 'number', 'description': 'Optional price ceiling.'}},
+         'required': ['query']}},
     {'name': 'spending_policy',
      'description': 'Read the effective sandbox spend rules and remaining allowance before requesting a purchase. No payment is made.',
      'inputSchema': {'type': 'object', 'additionalProperties': False, 'required': ['agent'],
@@ -74,6 +81,8 @@ def status(pid):
 
 
 def call(name, a):
+    if name == 'find_products':
+        return channel3_search.search(a.get('query'), a.get('max_price'))
     if name == 'spending_policy':
         return http('GET', '/api/agent/policy?agent=' + urllib.parse.quote(str(a.get('agent', ''))))
     if name == 'request_purchase':
