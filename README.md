@@ -6,7 +6,7 @@
 
 Give each agent a budget and let it finish the job. When Claude Code needs a domain or GrokBot wants a flight, ApproveAccept tells you who is asking, what it costs and why. Inside the limit you set, PayPal pays. Over it, PayPal holds the money and the request waits for your Face ID.
 
-- **Try it now:** https://approveaccept.onrender.com/journey (public demo on Render, no sign-in, no money; payment IDs are marked `SUB`).
+- **Hosted demo:** https://approveaccept.onrender.com (Render, substitute mode, no money; payment IDs are marked `SUB`). It asks for the owner key, so judges get the judge path at https://approveaccept.204-168-133-192.sslip.io/judge.
 - **Run the full inbox locally in 2 minutes:** Path A below, no PayPal account needed.
 - **Built with:** PayPal Sandbox (Orders, authorize and capture), MCP, Channel3 product search, Render.
 
