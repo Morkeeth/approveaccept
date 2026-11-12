@@ -1,8 +1,22 @@
 # ApproveAccept
 
-ApproveAccept applies deterministic spend rules when any agent asks to buy something. An owner can grant a named agent a bounded allowance with a merchant list, per-purchase limit, monthly limit, and expiry. Matching one-time purchases proceed automatically. Anything outside the allowance becomes one clear phone decision. A category allowlist still blocks disallowed requests.
+![ApproveAccept: your agents ask, PayPal holds, you decide](docs/img/cover.png)
 
-The demo uses PayPal sandbox only. It never needs live credentials or real money.
+**Your agents ask. PayPal holds. You decide.**
+
+Give each agent a budget and let it finish the job. When Claude Code needs a domain or GrokBot wants a flight, ApproveAccept tells you who is asking, what it costs and why. Inside the limit you set, PayPal pays. Over it, PayPal holds the money and the request waits for your Face ID.
+
+- **Try it now:** https://approveaccept.onrender.com/journey (public demo on Render, no sign-in, no money; payment IDs are marked `SUB`).
+- **Run the full inbox locally in 2 minutes:** Path A below, no PayPal account needed.
+- **Built with:** PayPal Sandbox (Orders, authorize and capture), MCP, Channel3 product search, Render.
+
+<img src="docs/img/app-requests.png" alt="Requests grouped by agent, with GrokBot's flight held over its limit" width="360">
+
+## How it works
+
+ApproveAccept applies deterministic spend rules when any agent asks to buy something. An owner grants a named agent a bounded allowance: merchant list, per-purchase limit, monthly limit and expiry. Matching one-time purchases proceed automatically. Anything outside the allowance becomes one clear phone decision. A category allowlist still blocks disallowed requests. Agents can search real retailer offers first with the `find_products` tool (Channel3); it only searches and never pays.
+
+The demo uses PayPal Sandbox only. It never needs live credentials or real money.
 
 ## The idea: your agents buy, PayPal holds, you decide
 
