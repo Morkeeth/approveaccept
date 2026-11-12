@@ -118,7 +118,7 @@ Optional dev dependency: [Playwright](https://playwright.dev) (`npm install play
 
 Public visitors get a synthetic read-only walkthrough. The owner signs in to the private queue with a separate access key. Remote agents use a different bearer key bound to their exact agent name; they cannot change owner permissions or read another agent’s requests. See `ENVIRONMENT.md` for setup.
 
-`./start-host.sh` starts the sandbox API on an internal port and the judge-facing design service on `$PORT`. The root service and the internal API each expose `/health`. `Dockerfile` and `render.yaml` are local deployment preparation only; nothing has been deployed. See `ENVIRONMENT.md` for environment-variable names and purposes. Sandbox remains the default and live money remains off.
+`./start-host.sh` starts the sandbox API on an internal port and the judge-facing design service on `$PORT`. The root service and the internal API each expose `/health`. A public demo runs on Render at https://approveaccept.onrender.com, deployed from `render.yaml` in substitute mode: no PayPal secrets are on the host and every payment ID is marked `SUB`. The PayPal Sandbox run is local, shown in the video. See `ENVIRONMENT.md` for environment-variable names and purposes. Sandbox remains the default and live money remains off.
 
 The public judge path is in `JUDGE-PATH.md`.
 
