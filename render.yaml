@@ -12,6 +12,8 @@ services:
         sync: false
       - key: APPROVEACCEPT_GUIDED_DEMO
         value: "1"
+      - key: LEASH_V2_SUBSTITUTE
+        value: "1"
       - key: APPROVEACCEPT_OWNER_TOKEN
         sync: false
       - key: APPROVEACCEPT_AGENT_TOKEN
